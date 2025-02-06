@@ -30,10 +30,10 @@ drawLine 13 10 15 12 $pc
 
 # house
 drawLine 1 61 63 61 $pt
-drawRec  41 40 19 20 $pt
+drawRect  41 40 19 20 $pt
 drawTriangle 40 40 60 40 50 30 $pt
-drawRec 43 50 6 10 $pt
-drawRec 51 50 6 6 $pt 
+drawRect 43 50 6 10 $pt
+drawRect 51 50 6 6 $pt 
 drawLine 38 40 50 28 $pt
 
 #text

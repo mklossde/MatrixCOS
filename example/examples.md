@@ -6,6 +6,7 @@
 Draw a count-down - <a href='TimeDateClock.cmd'>TimeDateClock.cmd</a>
 
 ## solor
+![example](../images/example_pv2.gif)
 receive information via MQTT and show as solar energy
 <a href='solar.cmd'>solar.cmd</a>
 
