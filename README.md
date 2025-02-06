@@ -13,8 +13,8 @@ It a christmas projet inspired by
 	<a href='https://github.com/JPlenert/eely-hodi'>eely-HoDi Make Articel</a> 
 
 	
-##  Example show values 
-![Display-Example](images/pageTitle.gif)	
+##  Example MatrixCOS Title
+![Display-Title](images/pageTitle.gif)	
 
 <a href='example/examples.md'>Other Examples</a>
 
