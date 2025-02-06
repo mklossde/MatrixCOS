@@ -12,7 +12,13 @@ This is a ESP32 based Applciation to display information via HUB75 Matrix displa
 Is Applciation as a christmas projet inspired by 
 	<a href='https://github.com/JPlenert/eely-hodi'>eely-HoDi Make Articel</a> 
 	
-	
+
+##  Example show values 
+
+!(images/pageEsp.gif)	
+Exmaple of displa esp values on the matrix display
+
+<a href='example/examples.md>Other Examples</a>
 
 ## Setup
 	matrix 64 64 1 90 0 0,15,4,16,27,17,5,18,19,21,12,33,25,22

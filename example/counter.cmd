@@ -23,7 +23,7 @@ $c = 3
 #light
   drawClear
   drawColor 15 15 15
-  FillRect 0 0 64 64 
+  fillRect 0 0 64 64 
   draw
   wait 10
 
