@@ -18,8 +18,8 @@ It a christmas projet inspired by
 
 ## Feature 
  - <a href='doc/Commands.md'>matrix commands</a>
- - <a href='dox/Config.md'>display config</a>
- - <a href='dox/Web.md'>web control</a> 
+ - <a href='doc/Config.md'>display config</a>
+ - <a href='doc/Web.md'>web control</a> 
  - <a href='doc/Mqtt.md'>mqtt control</a>
  - <a href='doc/Rest.md'>rest control</a>
  - <a href='dox/Timer.md'>autostart and timer</a> 
