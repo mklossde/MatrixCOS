@@ -22,8 +22,8 @@ It a christmas projet inspired by
  - <a href='doc/Web.md'>web control</a> 
  - <a href='doc/Mqtt.md'>mqtt control</a>
  - <a href='doc/Rest.md'>rest control</a>
- - <a href='dox/Timer.md'>autostart and timer</a> 
- - <a href='dox/Multi.md'>multi display</a> 
+ - <a href='doc/Timer.md'>autostart and timer</a> 
+ - <a href='doc/Multi.md'>multi display</a> 
  - <a href='http://github.com/mklossde/CmdOs'>CmdOS features</a>
 	
 ## Command Examples 
