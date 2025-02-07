@@ -1,5 +1,5 @@
-# MatrixHub
-MatrixCOS - Esp32 HUB75 Matrix 64x64
+
+# MatrixCOS - Esp32 HUB75 Matrix
 
 develop by mk@almi.de
 
@@ -14,11 +14,20 @@ This is a ESP32 based Applciation to display information via HUB75 Matrix displa
 It a christmas projet inspired by 
 	<a href='https://github.com/JPlenert/eely-hodi'>eely-HoDi Make Articel</a> 
 
-	
-##  Example MatrixCOS Title
 ![Display-Title](images/pageTitle.gif)	
 
-<a href='example/examples.md'>Other Examples</a>
+## Feature 
+ - <a href='doc/Commands.md'>matrix commands</a>
+ - <a href='dox/Config.md'>display config</a>
+ - <a href='dox/Web.md'>web control</a> 
+ - <a href='doc/Mqtt.md'>mqtt control</a>
+ - <a href='doc/Rest.md'>rest control</a>
+ - <a href='dox/Timer.md'>autostart and timer</a> 
+ - <a href='dox/Multi.md'>multi display</a> 
+ - <a href='http://github.com/mklossde/CmdOs'>CmdOS features</a>
+	
+## Command Examples 
+<a href='example/examples.md'>command Examples</a>
 
 ##  Example show values 
 ![Display-Example](images/pageEsp.gif)	
@@ -26,8 +35,6 @@ Exmaple of displays esp values on the matrix display
 
 ##  Example disaply animated gif
 ![Display-Example](images/example_image.gif)
-
-
 
 ## Setup
 	matrix 64 64 1 90 0 0,15,4,16,27,17,5,18,19,21,12,33,25,22

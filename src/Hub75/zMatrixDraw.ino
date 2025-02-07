@@ -372,6 +372,8 @@ void matrixWeb(AsyncWebServerRequest *request) {
   String message;
   if (request->hasParam("drawClear")) {  drawClose();
   }else if (request->hasParam("drawTitle")) {  pageTitle();
+  }else if (request->hasParam("drawEsp")) {  pageEsp();
+  }else if (request->hasParam("drawTest")) {  pageTest();
   }else if (request->hasParam("drawFile")) { 
     String name=webParam(request,"name");  
     char *file=(char*)name.c_str();
@@ -386,7 +388,7 @@ void matrixWeb(AsyncWebServerRequest *request) {
   String html = ""; html = pageHead(html, "MatrixHup");
   File root = FILESYSTEM.open(rootDir);
   File foundfile = root.openNextFile();
-  html+="[<a href=?drawTitle=1>Title</a>][<a href=?drawClear=1>OFF</a>]";
+  html+="[<a href=?drawTitle=1>Title</a>][<a href=?drawEsp=1>Esp</a>][<a href=?drawTest=1>Test</a>][<a href=?drawClear=1>OFF</a>]";
   html+="<table><tr>";
   int cols=0;
   while (foundfile) { 
@@ -417,52 +419,86 @@ void matrixWeb(AsyncWebServerRequest *request) {
 // cmd
 
 char* matrixCmd(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,char *p6,char *p7,char *p8,char *p9) {
-    if(strcmp(cmd, "drawOff")==0) { drawOff(); return EMPTY; }    // switch off
-    else if(strcmp(cmd, "drawClear")==0) { drawClear(); return EMPTY; } // clear display/buffer
-    else if(strcmp(cmd, "drawStop")==0) { drawFileClose(); return EMPTY; } // stop playing
-    else if(strcmp(cmd, "draw")==0) { draw(); return EMPTY; } // draw actual buffer => flip Buffer
+    // drawOff => switch display off by clear and stop all
+    if(strcmp(cmd, "drawOff")==0) { drawOff(); return EMPTY; }
+    // drawClear => clear display
+    else if(strcmp(cmd, "drawClear")==0) { drawClear(); return EMPTY; } 
+    // drawStop => stop all (not clear)
+    else if(strcmp(cmd, "drawStop")==0) { drawFileClose(); return EMPTY; } 
+    // draw => draw buffer, draw content from buffer on display or flip dma buffer
+    else if(strcmp(cmd, "draw")==0) { draw(); return EMPTY; } 
 
-    else if(strcmp(cmd, "matrixBrightness")==0) { int b=toInt(p0); matrixBrightness(b); return EMPTY; }
+    // brightness n - set up brightness of dislpay
+    else if(strcmp(cmd, "brightness")==0) { int b=toInt(p0); matrixBrightness(b); return EMPTY; }
     
-//TODO  matrixHub75_Color444 do not work ? toInt ok ?   
+    //drawColor r g b - calculate 444 color and set as default color    
+    // default color for all draw-commands (use by draw command if no or -1 is given as color)
     else if(strcmp(cmd, "drawColor")==0) { uint16_t col=toColor444(toInt(p0),toInt(p1),toInt(p2));drawColor(col); sprintf(buffer,"%d",col); return buffer; }
+    // drawColor565 r g b - calculate 565 color and set as default color 
     else if(strcmp(cmd, "drawColor565")==0) { uint16_t col=toColor565(toInt(p0),toInt(p1),toInt(p2)); drawColor(col); sprintf(buffer,"%d",col); return buffer; }
 
+    //fillScreen c - fill screen with color	
     else if(strcmp(cmd, "fillScreen")==0) { fillScreen(toInt(p0)); return EMPTY; }
+    // drawPixel x y c - draw a pixel at x y
     else if(strcmp(cmd, "drawPixel")==0) { drawPixel(toInt(p0),toInt(p1),toInt(p2)); return EMPTY; }
+    // drawLine x y x2 y2 c - draw a line (from x,y to x2,y2)
     else if(strcmp(cmd, "drawLine")==0) { drawLine(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4)); return EMPTY; }
+    // rawRect x y w h c - draw rect (rect from x,y to x+w,y+h)
     else if(strcmp(cmd, "drawRect")==0) { drawRect(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4)); return EMPTY; }
+    // fillRect x y w h c - draw a filled rect
     else if(strcmp(cmd, "fillRect")==0) { fillRect(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4)); return EMPTY; }
+    // drawTriangle x y x2 y2 x3 y3 c - draw a trinagle (from x,y to x2,y2 to x3,y3 to x,y)
     else if(strcmp(cmd, "drawTriangle")==0) { drawTriangle(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4),toInt(p5),toInt(p6)); return EMPTY; }
+    // fillTriangle x y x2 y2 x3 y3 c -  draw a filled triangle
     else if(strcmp(cmd, "fillTriangle")==0) { fillTriangle(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4),toInt(p5),toInt(p6)); return EMPTY; }
 
+    // drawCircle x y w c - draw circle at x y with radius w 
     else if(strcmp(cmd, "drawCircle")==0) { drawCircle(toInt(p0),toInt(p1),toInt(p2),toInt(p3)); return EMPTY; }
+    // fillCircle x y w c - draw filled circle at x y with radius w 
     else if(strcmp(cmd, "fillCircle")==0) { fillCircle(toInt(p0),toInt(p1),toInt(p2),toInt(p3)); return EMPTY; }
+    // drawArc x y angel seg rx ry w c - draw a segment arc at x,y start at angel (0=top), end after seg, with radiusX and radiusY and thikness w 
     else if(strcmp(cmd, "drawArc")==0) { drawArc(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4),toInt(p5),toInt(p6),toInt(p7)); return EMPTY; }
+    // drawSegment s i - set segemnt step (segmentStep=6,segmentInc=6) segmentStep=6 => full arc have 60 segments, 3=120
     else if(strcmp(cmd, "drawSegment")==0) { drawSegment(toInt(p0),toInt(p1)); return EMPTY; }
     
+    // drawFull x y w h p value max, c1,c2 - draw a full-element at x,y with w,h. full=100/max*value will be in color c2 and offset p
     else if(strcmp(cmd, "drawFull")==0) { drawFull(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4),toInt(p5),toInt(p6),toInt(p7),toInt(p8)); return EMPTY; }
 
+    // drawText x y c size text - draw text at x y with size 
     else if(strcmp(cmd, "drawText")==0) { drawText(toInt(p0),toInt(p1),toInt(p2),toInt(p3),p4); return EMPTY; }
+
+    // pageTest - draw test page - simple dislpay test
     else if(strcmp(cmd, "pageTest")==0) { pageTest(); return EMPTY; }
+    // pageTitle - draw title page - matrixCOS title
     else if(strcmp(cmd, "pageTitle")==0) { pageTitle(); return EMPTY; }
+    // pageEsp - draw esp page - show esp informations 
     else if(strcmp(cmd, "pageEsp")==0) { pageEsp(); return EMPTY; }
 
+    // drawFile file type x y - draw a gif/icon at x,y
     else if(strcmp(cmd, "drawFile")==0) { drawFile(p0,p0,toInt(p1),toInt(p2),false); return EMPTY; }    
+    // drawUrl url x y - draw content of url (gif/icon) at a x 
     else if(strcmp(cmd, "drawUrl")==0) { drawUrl(toString(p0),toInt(p1),toInt(p2),false); return EMPTY; }
 
+    // write wifi icon as wifi.bm1 file 
     else if(strcmp(cmd, "writeIcon")==0) { 
       uint8_t* uint8Ptr = (uint8_t*)reinterpret_cast<const uint8_t*>(wifi_image1bit);
       fsWriteBin("wifi.bm1",uint8Ptr,sizeof(wifi_image1bit)); return EMPTY; 
     }    
+    // drawIcon x y w h c file - draw icon (bm1) at x,y with w,h of color 
     else if(strcmp(cmd, "drawIcon")==0) { drawIcon(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4),p5); return EMPTY; }
   
+    // drawTime x y c - draw time (format hh:mm:ss) at x,y of color c 
     else if(strcmp(cmd, "drawTime")==0) { drawTime(toInt(p0),toInt(p1),toInt(p2)); return EMPTY; }
+    // drawDate x y c - draw date (format dd.mm.yyyy) at x,y of color c
     else if(strcmp(cmd, "drawDate")==0) { drawDate(toInt(p0),toInt(p1),toInt(p2)); return EMPTY; }
 
+    // effect type step speed a b - start effect type with n-steps with speed in ms between steps
     else if(equals(cmd, "effect")) { effectStart(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4)); return EMPTY;  } // start effect 
 
+    // matrix sizeX sizeY chain brightness rotation pins - config hub75 dislpay/connection
+	  // e.g. matrix 64 64 1 90 0 0,15,4,16,27,17,5,18,19,21,12,33,25,22
     else if(strcmp(cmd, "matrix")==0) { return cmdSetMatrix(p0,p1,p2,p3,p4,p5);  }
+    // buffer dmaBuffer displayBuffer - (0=off/1=on) enable dmsBuffer or displayBuffer 
     else if(strcmp(cmd, "buffer")==0) { return cmdSetBuffer(toBoolean(p0),toBoolean(p1));  }
 //    else if(strcmp(cmd, "drawEffect")==0) { drawEffect(); return "drawEffect"; }
 

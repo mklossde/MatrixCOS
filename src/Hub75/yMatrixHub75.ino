@@ -77,20 +77,21 @@ void drawRect(int x,int y, int w,int h,int color) { if(color==-1) { color=_color
 /* draw fill rec */
 void fillRect(int x,int y, int w,int h,int color) { if(color==-1) { color=_color; } display->fillRect(x,y,w,h, color); }  
 
+// drawTriangle x y x2 y2 x3 y3 c - draw a trinagle (from x,y to x2,y2 to x3,y3 to x,y)
 void drawTriangle(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color) {
   if(color==-1) { color=_color; } display->drawTriangle(x0,y0,x1,y1,x2,y2,color);
 }
+// fillTriangle x y x2 y2 x3 y3 c -  draw a filled triangle
 void fillTriangle(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color) {
   if(color==-1) { color=_color; } display->fillTriangle(x0,y0,x1,y1,x2,y2,color);
 }
 
-/* draw circle */
+// drawCircle x y w c - draw circle at x y with radius w 
 void drawCircle(int x,int y, int w,int color) { if(color==-1) { color=_color; } display->drawCircle(x,y,w, color); }   
-/* draw fill circle */
+// draw filled circle at x y with radius w 
 void fillCircle(int x,int y, int w,int color) { if(color==-1) { color=_color; } display->fillCircle(x,y,w, color); }  
 
-byte _segmentStep=6; // Segments are 3 degrees wide = 120 segments for 360 degrees
-byte _segmentInc=6; // Draw segments every 3 degrees, increase to 6 for segmented ring
+
 
 void drawRoundRect(uint16_t x0, uint16_t y0, uint16_t w, uint16_t h, uint16_t radius, uint16_t color) { if(color==-1) { color=_color; } display->drawRoundRect(x0,y0,w,h,radius,color); }
 void fillRoundRect(uint16_t x0, uint16_t y0, uint16_t w, uint16_t h, uint16_t radius, uint16_t color) { if(color==-1) { color=_color; } display->drawRoundRect(x0,y0,w,h,radius,color);  }
@@ -185,6 +186,9 @@ void drawIcon(int x, int y, int w,int h,int color,char *xbm,int size) {
 }
 
 //-------------------------------------------------------------------
+
+byte _segmentStep=6; // Segments are 3 degrees wide = 120 segments for 360 degrees
+byte _segmentInc=6; // Draw segments every 3 degrees, increase to 6 for segmented ring
 
 /* set _segmentStep and _segmentInc */
 void drawSegment(int segmentStep, int segmentInc) { _segmentStep=segmentStep; _segmentInc=segmentInc; }

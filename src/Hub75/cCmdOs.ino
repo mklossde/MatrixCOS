@@ -1223,6 +1223,15 @@ void bootClear() {
   EEPROM.end();  
 }
 
+byte _bootRestVal=0;
+
+/* boot reset */
+char* bootReset(char *p) {
+  int i=toInt(p);
+  if(i>0 && i==_bootRestVal) { bootClear(); return "reset done";} // do reset 
+  else { _bootRestVal=random(1,99); sprintf(buffer,"%d",_bootRestVal); return buffer; } // without set new reset value
+}
+
 
 void bootPrivat() {
   sprintf(eeBoot.wifi_ssid,wifi_ssid_default); // my privat WIFI SSID of AccessPoint
@@ -2097,6 +2106,21 @@ void webRoot(AsyncWebServerRequest *request) {
   request->send(200, "text/html", html);
 }
 
+void webWifiReset(AsyncWebServerRequest *request) {
+  String value=webParam(request,"reset");
+  char* res=bootReset((char*)value.c_str());
+  String html = "";
+  html = pageHead(html, "Reset");
+  html += "<b>"+String(res)+"</b>";
+  html = pageForm(html, "Reset");
+  html = pageInput(html, "reset", "");
+  html = pageButton(html, "ok", "ok");
+  html = pageFormEnd(html);
+
+  html = pageEnd(html,EMPTYSTRING);
+  request->send(200, "text/html", html);
+}
+
 //-------------------------------------------------------------------------------------------------------------------
 // File Manager
 
@@ -2309,7 +2333,7 @@ void webWifi(AsyncWebServerRequest *request) {
   String message;
   if (request->hasParam("ok")) { webWifiSet(request); message="set"; }
   else if (request->hasParam("save")) { bootSave(); message="saved";  }
-  else if (request->hasParam("reset")) { bootClear(); message="reset";  }
+  else if (request->hasParam("reset")) { webWifiReset(request); return ;  }
   else if (request->hasParam("restart")) { espRestart("web restart"); }
 
   String html = "";
@@ -2328,7 +2352,8 @@ void webWifi(AsyncWebServerRequest *request) {
   html+= "<hr>";
   html = pageCmd(html, "restart", "restart");
   html = pageCmd(html, "save", "save");
-  html = pageCmd(html, "reset", "reset");
+//  html = pageCmd(html, "reset", "reset");
+  html += "[<a href='?reset=0'>reset</a>]";
   
   //  html=pageFormEnd(html,"ok");
   html = pageEnd(html,message);
@@ -2583,7 +2608,7 @@ char* cmdExec(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,
   else if(equals(cmd, "if")) { boolean ok=cmdIf(p0,p1,p2,p3); sprintf(buffer,"%d",ok); return buffer; }// if p0 <=> p2 => skip p4
   else if(equals(cmd, "random")) { int r=random(toInt(p0),toInt(p1));  sprintf(buffer,"%d",r); return buffer;  } // random min-max
   else if(equals(cmd,"extract")) { return extract(p0,p1,p2); } // extract start end str (e.g  "free:"," " from "value free:1000 colr:1" => 1000)
-  else if(equals(cmd, "reset")) { bootClear(); return EMPTY; }// reset eeprom and restart    
+  else if(equals(cmd, "reset")) { return bootReset(p0); }// reset eeprom and restart    
 
   else if(equals(cmd, "setup") && isAccess(ACCESS_ADMIN)) { return setup(p0,p1,p2,p3); }// setup wifi-ssid wifi-pas espPas => save&restart
   else if(equals(cmd, "setupDev") && isAccess(ACCESS_ADMIN)) { return setupDev(p0); } // enable/disable setupDevices
