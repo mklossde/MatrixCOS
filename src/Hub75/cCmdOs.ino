@@ -124,7 +124,7 @@ public:
       if(len>0) { memcpy( to, obj, len); } 
       to[len]='\0'; 
       _key[_index]=copy(key); _array[_index]=to; _vsize[_index]=size;      
-      sprintf(buffer,"map add %d '%s' len:%d size:%d",_index,key,len,size); logPrintln(LOG_DEBUG,buffer);
+      sprintf(buffer,"set %d '%s'='%s' len:%d size:%d",_index,key,to,len,size); logPrintln(LOG_DEBUG,buffer);
       _index++;
     }else {
       void* old=(void*)_array[index];
@@ -135,7 +135,7 @@ public:
       }         
       char* o=(char*)_array[index]; 
       if(len>0) { memcpy(o, obj, len); } o[len]='\0';
-      sprintf(buffer,"map replace '%s' len:%d oldSize:%d",key,len,oldSize); logPrintln(LOG_DEBUG,buffer);
+      sprintf(buffer,"replace '%s'='%s' len:%d oldSize:%d",key,o,len,oldSize); logPrintln(LOG_DEBUG,buffer);
     }
   }
   
@@ -309,7 +309,6 @@ boolean is(String str,int min,int max) { if(str==NULL || str==EMPTYSTRING ) { re
 /* convert to correct char */
 char* to(long d) { sprintf(buffer,"%d",d); return buffer; }
 char* to(char *p) {if(p!=NULL && strlen(p)>0 && strlen(p)<bufferMax) { return p; } else { return EMPTY; } }
-//char* to(const char *p) {if(p!=NULL && strlen(p)>0 && strlen(p)<bufferMax) { sprintf(valbuffer,"%s",p); return valbuffer; } else { return EMPTY; } }
 const char* to(const char *p) {if(p!=NULL && strlen(p)>0 && strlen(p)<bufferMax) { return p; } else { return EMPTY; } }
 
 //char* to(const char *a) {  sprintf(buffer,"%s",to(a)); return buffer; }
@@ -548,13 +547,14 @@ void timeLoop() {
 
 void webLogLn(String msg); // define in web
 void mqttLog(char *message); // define in mqtt
+//void mqttSet(char *mqtt); // set mqtt
 
 /* log with level 
     e.g. logPrintln(LOG_INFO,"info"); 
         sprintf(buffer,"name:'%s'",name);logPrintln(LOG_INFO,buffer);  
 */
 void logPrintln(int level,const char *text) { 
-  if(level>logLevel || text==NULL) { return ; }
+  if(level>logLevel || !is(text)) { return ; }
   if(serialEnable) { Serial.println(text); } 
   if(webEnable) { webLogLn(toString(text)); }
   if(mqttEnable) { mqttLog((char*)text); }
@@ -564,7 +564,7 @@ void logPrintln(int level,const char *text) {
     e.g. logPrintln(LOG_DEBUG,"info text");
 */
 void logPrintln(int level,String text) {  
-  if(level>logLevel || text==NULL) { return ; } 
+  if(level>logLevel || !is(text)) { return ; } 
   const char* log=text.c_str();
   if(serialEnable) { Serial.println(log); } 
   if(webEnable) { webLogLn(text); }
@@ -706,7 +706,7 @@ char* setLogLevel(int level) {
 
   /* list files in SPIFFS of dir (null=/) */
   char* fsDir() {
-    if(!isAccess(ACCESS_READ))  { return "NO ACCESS"; }
+    if(!isAccess(ACCESS_READ))  { return "NO ACCESS rest"; }
     sprintf(buffer,"Files:\n");
     File root = FILESYSTEM.open(rootDir);
     File foundfile = root.openNextFile();
@@ -1038,11 +1038,12 @@ void swLoop() {}
 #endif
 
 // Bootloader version
-char bootType[5] = "Os02"; // max 10 chars
+char bootType[5] = "Os01"; // max 10 chars
 
 // bootloader data struc
 typedef struct {
-  unsigned long timestamp;                 // timestamp of store  
+  unsigned long timestamp=0;                 // timestamp of store  
+  unsigned long saveCount=0;                  // number of saves
   char wifi_ssid[32]="";                   // WIFI SSID of AccessPoint
   char wifi_pas[32]="";                     // WIFI password of AccessPoint
   char wifi_ntp[32]="";                   // ntp server
@@ -1069,6 +1070,7 @@ eeBoot_t eeBoot;    // bootloader data
 void eeSave() {
   if(serialEnable) { Serial.println("### SAVE");}
   eeBoot.timestamp=timeSec();  
+  eeBoot.saveCount++; // rememeber number of saves
   int pos=0;
   EEPROM.begin(EEBOOTSIZE);
   EEPROM.put(pos, bootType ); pos+=5; // write type for validation
@@ -1123,9 +1125,11 @@ void eeSetup() {
     return; 
   }else if(eeMode==EE_MODE_SETUP) {
     if(serialEnable) { Serial.println("### MODE SETUP "); }
+    setAccess(true);
     return ;
   } else if(eeMode==EE_MODE_AP) {
     if(serialEnable) { Serial.println("### MODE AP "); }
+    setAccess(true);
     return ;
   }
 
@@ -1133,10 +1137,10 @@ void eeSetup() {
     Serial.print("### MODE(NOBS) ");Serial.println(eeMode); // ignore all other on disable boot safe 
   }else if(eeMode==EE_MODE_ERROR) {
     if(serialEnable) { Serial.println("### MODE ERROR "); }
-    setAccess(ACCESS_ADMIN);
+    setAccess(true);
     eeSetMode(EE_MODE_SYSERROR); // mark 
   } else if(eeMode==EE_MODE_SYSERROR) {
-    setAccess(ACCESS_ADMIN);
+    setAccess(true);
     if(serialEnable) { Serial.println("### MODE SYSERROR "); }
 
   }else if(eeMode==EE_MODE_OK) { 
@@ -1170,21 +1174,23 @@ void eeLoop() {
 
 // info about boot 
 char* bootInfo() {
-   sprintf(buffer,"eeBoot eeMode:%d espName:%s espPas:%d espBoard:%s wifi_ssid:%s timestamp:%d mqtt:%s ntp:%s", 
-   eeMode, eeBoot.espName,is(eeBoot.espPas),eeBoot.espBoard,eeBoot.wifi_ssid,eeBoot.timestamp,eeBoot.mqtt,eeBoot.wifi_ntp); 
+   sprintf(buffer,"eeBoot eeMode:%d espName:%s espPas:%d espBoard:%s wifi_ssid:%s mqtt:%s ntp:%s timestamp:%d count:%d", 
+    eeMode, to(eeBoot.espName),is(eeBoot.espPas),to(eeBoot.espBoard),to(eeBoot.wifi_ssid),to(eeBoot.mqtt),to(eeBoot.wifi_ntp),
+    eeBoot.timestamp,eeBoot.saveCount); 
    return buffer;
 }
 
 /* set espName,espInfo */ 
-char* bootSet(char* espName,char* espPas) {
-  if(is(espName) && isAccess(ACCESS_ADMIN)) { strcpy(eeBoot.espName,espName); }
-  if(is(espPas) && isAccess(ACCESS_ADMIN)) { strcpy(eeBoot.espPas,espPas); }
+char* bootSet(char* espName,char* espPas,char* espBoard) {
+  if(is(espName,1,31) && isAccess(ACCESS_ADMIN)) { strcpy(eeBoot.espName,espName); }
+  if(is(espPas,1,31) && isAccess(ACCESS_ADMIN)) { strcpy(eeBoot.espPas,espPas); }
+  if(is(espBoard,1,31) && isAccess(ACCESS_ADMIN)) { strcpy(eeBoot.espBoard,espBoard); }
   return bootInfo();
 }
 
 /* save bootloader from RAM into EEPROM [ADMIN] */
 void bootSave() {
-  if(!isAccess(ACCESS_ADMIN)) { return ; }
+  if(!isAccess(ACCESS_ADMIN)) { logPrintln(LOG_ERROR,"no access bootSave"); return ; }
 
   // auto set WIFI_CL_TRY when in AP
   if((eeMode<EE_MODE_WIFI_OFF) && is(eeBoot.wifi_ssid) && is(eeBoot.wifi_pas)) {
@@ -1208,7 +1214,7 @@ void bootRead() {
 
   sprintf(buffer,"EEPROM boot read mode:%d timestamp:%d espName:%s wifi_ssid:%s",eeMode,eeBoot.timestamp,eeBoot.espName,eeBoot.wifi_ssid); logPrintln(LOG_SYSTEM,buffer); 
   logPrintln(LOG_SYSTEM,bootInfo());
-  mqttSet(eeBoot.mqtt);  // set mqtt
+  mqttSetUrl(eeBoot.mqtt);  // set mqtt
   if(!is(eeBoot.espPas)) { setAccess(ACCESS_ADMIN); } // without espApd admin=true
   ledBlink(1,100); // OK => direct blink 1x100ms
 }
@@ -1228,10 +1234,9 @@ byte _bootRestVal=0;
 /* boot reset */
 char* bootReset(char *p) {
   int i=toInt(p);
-  if(i>0 && i==_bootRestVal) { bootClear(); return "reset done";} // do reset 
-  else { _bootRestVal=random(1,99); sprintf(buffer,"%d",_bootRestVal); return buffer; } // without set new reset value
+  if(i>1 && i==_bootRestVal) { bootClear(); return "reset done";} // do reset 
+  else { _bootRestVal=random(2,99); sprintf(buffer,"%d",_bootRestVal); return buffer; } // without set new reset value
 }
-
 
 void bootPrivat() {
   sprintf(eeBoot.wifi_ssid,wifi_ssid_default); // my privat WIFI SSID of AccessPoint
@@ -1254,9 +1259,10 @@ boolean _isLogin=false;
 
 /* have access level */
 bool isAccess(int requireLevel) {   
-  if(_isLogin || !is(eeBoot.espPas)) { return true; } // isLogin or no password given
-  else if(requireLevel>eeBoot.accessLevel) { return true; } // access free
-  else { logPrintln(LOG_ERROR,"ACCESS DENIED"); return false; }
+  if(_isLogin) { return true; } // is login 
+  else if(!is(eeBoot.espPas)) { return true; } // no password given
+  else if(requireLevel>=eeBoot.accessLevel) { return true; } // access free
+  else { sprintf(buffer,"ACCESS DENIED %d<%d %d",requireLevel,eeBoot.accessLevel,_isLogin); logPrintln(LOG_ERROR,buffer); return false; }
 }
 
 void setAccess(boolean login) { _isLogin=login; }
@@ -1370,13 +1376,13 @@ void ntpSetup() {
 /* set time and timeServer [ADMIN] */
 char* timeSet(char* time,char* timeServer) {
   if(time!=NULL && strlen(time)>0) {
-    if(!isAccess(ACCESS_ADMIN)) { return "access denied"; }
+    if(!isAccess(ACCESS_ADMIN)) { return "no access set time"; }
     time_t newTime=(time_t)atol(time);
     timeval tv;tv.tv_sec = newTime;    
     settimeofday(&tv,NULL); // set your time (e.g set time 1632839830)
   }
-  if(timeServer!=NULL) { 
-    if(!isAccess(ACCESS_ADMIN)) { return "access denied"; }
+  if(is(timeServer,1,31)) { 
+    if(!isAccess(ACCESS_ADMIN)) { return "no access set timeServer"; }
     strcpy(eeBoot.wifi_ntp,timeServer);    
   }
   return timeInfo();
@@ -1521,15 +1527,16 @@ char* wifiSet(char *wifi_ssid,char *wifi_pas) {
 }
 
 /* setup wifi and espPas + save + boot */
-char* setup(char *wifi_ssid, char *wifi_pas,char *espName, char *espPas) {
-  if(isAccess(ACCESS_ADMIN)) { return "no access"; }
-  if(!is(wifi_ssid) && !(wifi_pas)) { return "wrong"; }
+char* setupEsp(char *wifi_ssid, char *wifi_pas,char *espName, char *espPas,char *mqtt) {
+  if(!isAccess(ACCESS_ADMIN)) { return "no access setup"; }
+  if(!is(wifi_ssid) && !(wifi_pas)) { return "missing ssid/pas"; }
 
   eeBoot= eeBoot_t(); // reinit 
-  strcpy(eeBoot.wifi_ssid,wifi_ssid); 
-  strcpy(eeBoot.wifi_pas,wifi_pas);  
-  if(is(espName)) { strcpy(eeBoot.espName,espName); }
-  if(is(espPas)) { strcpy(eeBoot.espPas,espPas); }
+  if(is(wifi_ssid,1,31)) {strcpy(eeBoot.wifi_ssid,wifi_ssid); }
+  if(is(wifi_pas,1,31)) { strcpy(eeBoot.wifi_pas,wifi_pas);  }
+  if(is(espName,1,31)) { strcpy(eeBoot.espName,espName); }
+  if(is(espPas,1,31)) { strcpy(eeBoot.espPas,espPas); }
+  mqttSet(mqtt); 
   bootSave();
   return bootInfo();
 }
@@ -1548,7 +1555,7 @@ void wifiAccessPoint(boolean setpUpAP) {
 
   WiFi.softAPConfig(ap_IP, ap_gateway, ap_subnet);  
   WiFi.softAP(apSSID);
-  setAccess(ACCESS_ADMIN); // enable admin in AP
+  setAccess(true); // enable admin in AP
   IPAddress myIP = WiFi.softAPIP();
   sprintf(buffer,"WIFI AccessPoint SSID:%s IP:%s", apSSID,myIP.toString().c_str()); logPrintln(LOG_SYSTEM,buffer); 
 //TODO  ledBlinkPattern(0,&ledPatternFlashSlow); // blink AP mode
@@ -1562,11 +1569,16 @@ void wifiAccessPoint(boolean setpUpAP) {
   bootWifiCount=1;
 }
 
+int _lastClient=0;
+
 /* this ap is connected from client */
 void wifiAPClientConnect() {
-//  if (WiFi.status() == WL_AP_CONNECTED) {
-//    sprintf(buffer,"client connect to ap"); logPrintln(LOG_DEBUG,buffer);    
-//  }  
+  int numClients = WiFi.softAPgetStationNum();
+  if (numClients>_lastClient) {
+    _lastClient=numClients;
+    sprintf(buffer,"client %d connect to ap",numClients); logPrintln(LOG_DEBUG,buffer);    
+    // esp_wifi_ap_get_sta_list()
+  }  
 }
 
 /** this client connected to remote set_up */
@@ -1574,9 +1586,18 @@ void wifiAPConnectoToSetup() {
     if (WiFi.status() == WL_CONNECTED) {      
       String gw=WiFi.gatewayIP().toString();
       String setupUrl="http://"+gw+"/setupDevice";
-      sprintf(buffer,"wifiAPConnectoToSetup call %s",setupUrl.c_str()); logPrintln(LOG_SYSTEM,buffer);
+      sprintf(buffer,"WIFI set_up connected %1 call %s",gw.c_str(),setupUrl.c_str()); logPrintln(LOG_SYSTEM,buffer);
       char* ret=cmdRest((char*)setupUrl.c_str());
-      logPrintln(LOG_SYSTEM,buffer);
+      logPrintln(LOG_SYSTEM,ret);
+    }else if(serialEnable) { 
+      Serial.print("s");Serial.print(bootWifiCount); Serial.print(WiFi.status());
+      bootWifiCount++;
+      if(bootWifiCount>MAX_NO_SETUP) { // set_up failed => switch to ap
+        logPrintln(LOG_INFO,"\nno wifi set_up found"); 
+//        eeSetMode(EE_MODE_AP); eeSave();espRestart("no setup wifi, fallback ap"); // fallback to AccessPoint on faild try 
+        wifiAccessPoint(false); 
+        eeMode=EE_MODE_AP;        
+      }
     }
 }
 
@@ -1599,10 +1620,10 @@ void wifiConnecting() {
       if(ntpEnable) { ntpSetup(); }
 
     }else { // Connecting
-      if(bootWifiCount==0) { }
-      else if( eeMode == EE_MODE_SETUP && bootWifiCount<MAX_NO_SETUP) {  // try faild
-        logPrintln(LOG_INFO,"no wifi setup"); 
-        eeSetMode(EE_MODE_AP); eeSave();espRestart("no setup wifi, fallback ap"); // fallback to AccessPoint on faild try  
+      if(bootWifiCount==0) { 
+//    }  else if( eeMode == EE_MODE_SETUP && bootWifiCount<MAX_NO_SETUP) {  // try faild
+//        logPrintln(LOG_INFO,"no wifi setup"); 
+//        eeSetMode(EE_MODE_AP); eeSave();espRestart("no setup wifi, fallback ap"); // fallback to AccessPoint on faild try  
 
       }else if(bootWifiCount<MAX_NO_WIFI) {              
         if(serialEnable) {sprintf(buffer,"%d",WiFi.status()); Serial.print(buffer); }   
@@ -1655,10 +1676,10 @@ void wifiTry() {
 
 /* wifi login to setup Router */
 void wifiStartSetup() {
-  sprintf(buffer,"WIFI setup SSID:%s ...", wifi_setup); logPrintln(LOG_INFO,buffer); 
+  sprintf(buffer,"WIFI set_up connecting %s ...", wifi_setup); logPrintln(LOG_INFO,buffer); 
   delay(10);
   WiFi.mode(WIFI_STA);
-  WiFi.begin(wifi_setup, wifi_setup);
+  WiFi.begin(wifi_setup);
   bootWifiCount=1;  
   wifiStat=WIFI_CON_CONNECTING;
 }
@@ -1771,6 +1792,7 @@ void otaLoop() {}
 #endif
 
 
+
 #if mqttEnable
 
 // MQTT
@@ -1806,17 +1828,19 @@ static char* mqttMessage=new char[1024]; // buffer of message
 /* get mqtt infos */
 char* mqttInfo() {
   if(!is(eeBoot.mqtt) || !is(mqttUser) || !is(mqttServer) ) { return "mqtt not defined"; }
-  char *type="mqtt"; if(mqttSSL) { type="mqtts"; }
-  sprintf(buffer,"MQTT status:%d  %s://%s:%d@%s:%d (ee:%s)",
-    mqttStatus,type,mqttUser,is(mqttPas),mqttServer,mqttPort,eeBoot.mqtt); return buffer;
+  char *type="mqtt"; if(mqttSSL) { type="mqtts"; }  
+  if(is(mqttUser)) {
+    sprintf(buffer,"MQTT status:%d  %s://%s:%d@%s:%d (ee:%s)",
+      mqttStatus,type,to(mqttUser),is(mqttPas),to(mqttServer),mqttPort,to(eeBoot.mqtt)); return buffer;
+  }else { sprintf(buffer,"MQTT status:%d  %s://%s:%d (ee:%s)",mqttStatus,type,to(mqttServer),mqttPort,to(eeBoot.mqtt)); return buffer;}
 }
 
 /* split mqtt-url */
-void setMqttUrl(char* mqtt) {
+void mqttSetUrl(char* mqttUrl) {
   mqttUser=NULL; mqttPas=NULL; mqttServer=NULL; mqttPort=1833;  
-  if(sizeof(mqtt)<1) { logPrintln(LOG_ERROR,"MQTT missing url"); return ; }
-  strcpy(eeBoot.mqtt,mqtt);
+  if(!is(mqttUrl,1,127)) { logPrintln(LOG_ERROR,"MQTT missing/wrong"); return ; }
 
+  char *mqtt=copy(mqttUrl);  
    if(strncmp(mqtt, "mqtt://",7)==0) { mqttSSL=false;  } 
    else if(strncmp(mqtt, "mqtts://",7)==0) { mqttSSL=false; }
    else { return ; } 
@@ -1833,13 +1857,16 @@ void setMqttUrl(char* mqtt) {
    char *port=strtok_r(NULL, "",&ptr); if(port==NULL) { logPrintln(LOG_ERROR,"MQTT missing port"); return ;} 
    mqttPort=atoi(port);
 
-   sprintf(buffer,"MQTT set ssl:%d server:%s port:%d user:%s pas:%s", mqttSSL, mqttServer,mqttPort,mqttUser,mqttPas);  logPrintln(LOG_INFO,buffer);
+   sprintf(buffer,"MQTT set ssl:%d server:%s port:%d user:%s pas:%s", mqttSSL, to(mqttServer),mqttPort,to(mqttUser),to(mqttPas));  logPrintln(LOG_INFO,buffer);
+   delete[] mqtt;
 }
 
 /* set mqtt url */
 char* mqttSet(char* mqtt) {
-  if(is(mqtt,0,128) && isAccess(ACCESS_ADMIN)) {     
-    setMqttUrl(mqtt);
+  if(is(mqtt,1,128) && isAccess(ACCESS_ADMIN)) {     
+    strcpy(eeBoot.mqtt,mqtt);  
+
+    mqttSetUrl(eeBoot.mqtt);
   }
   return mqttInfo();
 }
@@ -2404,12 +2431,16 @@ byte setupDevice=0;
 void webSetupDevice(AsyncWebServerRequest *request) {
   if(setupDevice>0) {
     String name=webParam(request,"name");
-    char *setupName; if(name!=NULL) { setupName=(char*)name.c_str(); } else { setupName="\"\""; }
-    sprintf(buffer,"setup %s %s %s %s",eeBoot.wifi_ssid,eeBoot.wifi_pas,setupName,eeBoot.espPas);
-    request->send(200, "text/plain", "setup "); 
-    sprintf(buffer,"webSetupDevice %s",setupName); logPrintln(LOG_INFO,buffer); 
+    char *setupName=NULL; if(name!=NULL) { setupName=(char*)name.c_str(); } 
+    sprintf(buffer,"setup \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"",to(eeBoot.wifi_ssid),to(eeBoot.wifi_pas),to(setupName),to(eeBoot.espPas),
+      to(eeBoot.mqtt));
+    request->send(200, "text/plain", buffer);     
     if(setupDevice<255) { setupDevice--;}
-    if(setupDevice==0) { wifiInit(); } // switch back to normal wifi
+    sprintf(buffer,"webSetupDevice %s setupDevice:%d",to(setupName),setupDevice); logPrintln(LOG_INFO,buffer); 
+    if(setupDevice==0) { 
+//      wifiInit(); 
+      WiFi.softAPdisconnect (true);
+    } // switch back to normal wifi
   }
 }  
 
@@ -2570,7 +2601,8 @@ char prgLine [maxInData]; // prgLine buffer
 
 
 char* appInfo() {
-   sprintf(buffer,"AppInfo %s %s eeType:%s login:%d access_level:%d",prgTitle,prgVersion,bootType,_isLogin,eeBoot.accessLevel); return buffer;
+   sprintf(buffer,"AppInfo %s %s CmdOs:%s bootType:%s login:%d access_level:%d",
+      prgTitle,prgVersion,cmdOS,bootType,_isLogin,eeBoot.accessLevel); return buffer;
 }
 
 //------------------------------------------------------------------------------------------------
@@ -2594,6 +2626,8 @@ char* cmdExec(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,
   else if(equals(cmd, "esp")) { return espInfo();  }// show esp status
   else if(equals(cmd, "stat")) { return appInfo(); }// show esp status
 
+  else if(equals(cmd, "freeHeap")) { sprintf(buffer,"%d",ESP.getFreeHeap());return buffer; }// show free heap
+  
   else if(equals(cmd, "login")) { cmdLogin(p0); return EMPTY;}
   else if(equals(cmd, "restart")) { espRestart("cmd restart"); return EMPTY; }// restart
   else if(equals(cmd, "sleep")) {  sleep(p0,p1); return EMPTY; }      // sleep TIMEMS MODE (e.g. sleep 5000 0) (TIMEMS=0=>EVER) (MODE=0=>WIFI_OFF)
@@ -2610,15 +2644,15 @@ char* cmdExec(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,
   else if(equals(cmd,"extract")) { return extract(p0,p1,p2); } // extract start end str (e.g  "free:"," " from "value free:1000 colr:1" => 1000)
   else if(equals(cmd, "reset")) { return bootReset(p0); }// reset eeprom and restart    
 
-  else if(equals(cmd, "setup") && isAccess(ACCESS_ADMIN)) { return setup(p0,p1,p2,p3); }// setup wifi-ssid wifi-pas espPas => save&restart
+  else if(equals(cmd, "setup") && isAccess(ACCESS_ADMIN)) { return setupEsp(p0,p1,p2,p3,p4); }// setup wifi-ssid wifi-pas espPas => save&restart
   else if(equals(cmd, "setupDev") && isAccess(ACCESS_ADMIN)) { return setupDev(p0); } // enable/disable setupDevices
   
-  else if(equals(cmd, "log")) { sprintf(buffer,"%s %s %s %s %s %s %s %s",p0,p1,p2,p3,p4,p5,p6,p7); logPrintln(LOG_INFO,buffer); return buffer;}// log
+  else if(equals(cmd, "log")) { sprintf(buffer,"%s %s %s %s %s %s %s %s",p0,p1,p2,p3,p4,p5,p6,p7); logPrintln(LOG_INFO,buffer); return EMPTY;}// log
   else if(equals(cmd, "logLevel")) { return setLogLevel(toInt(p0)); }  // set mode (e.g. "mode NR")
 
   else if(equals(cmd, "save")) { bootSave(); return EMPTY; }// write data to eeprom
   else if(equals(cmd, "load")) { bootRead(); return EMPTY;  }// load data from eprom
-  else if(equals(cmd, "set")) {  return bootSet(p0,p1); }      // set esp name and password (e.g. "set" or "set NAME PAS")  
+  else if(equals(cmd, "conf")) {  return bootSet(p0,p1,p3); }      // set esp name and password (e.g. "set" or "set NAME PAS")  
   else if(equals(cmd,"access")) { setAccessLevel(toInt(p0)); return EMPTY; } // set  AccessLevel (e.g. "access 5")
   else if(equals(cmd, "wifi")) { return wifiSet(p0,p1); }      // set wifi, restart wifi and info (e.g. "wifi" or "wifi SSID PAS")  
   else if(equals(cmd, "scan")) {  return wifiScan(); }         // scan wifi (e.g. "scan")
@@ -2651,6 +2685,7 @@ char* cmdExec(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,
   else if(equals(cmd, "rest")) { return rest(p0); } // 
   else if(equals(cmd, "cmdRest")) { return cmdRest(p0); } // call http/rest and exute retur nbody as cmd
 
+  // timer 1 0 -1 -1 -1 -1 -1 "drawLine 0 0 20 20 888"
   else if(equals(cmd, "timer") && isAccess(ACCESS_CHANGE)) { timerAdd(toBoolean(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4),toInt(p5),toInt(p6),p7); return EMPTY; }
   else if(equals(cmd, "timerDel") && isAccess(ACCESS_CHANGE)) { timerDel(toInt(p0)); return EMPTY; }
   else if(equals(cmd, "timerGet") && isAccess(ACCESS_READ)) { 
@@ -2677,8 +2712,8 @@ void cmdWait(unsigned long cmdWait) { _cmdWait=cmdWait; *_prgTime=1; }
 
 /** goto key in prg */
 boolean cmdGoto(char *p0) { 
-  if(_prg==NULL || p0==NULL) { return "goto prg/label NULL"; }
-  else if(isInt(p0)) { _skipCmd=toInt(p0); return false;}
+  if(_prg==NULL || p0==NULL) { return "goto prg/label NULL"; } 
+  if(isInt(p0)) { _skipCmd=toInt(p0); return false;}
 
   char *findPtr=_prg;
   while(true) {
@@ -2814,7 +2849,11 @@ char* prgLoop() {
   char *line = nextCmd();  
   while(line==EMPTY) { line = nextCmd(); } // skip empty lines 
   if(line!=NULL) {  return cmdLine(line); }
-  else {  logPrintln(LOG_DEBUG,"PRG end"); delete[] _prg; _prg=NULL; _prgPtr=NULL;  return "prg end";  }
+  else {  
+    logPrintln(LOG_DEBUG,"PRG end"); 
+    if(_prg!=NULL) { delete[] _prg; _prg=NULL; _prgPtr=NULL; }  
+    return "prg end";  
+  }
 }
 
 /* next n steps */
@@ -2857,7 +2896,10 @@ char* cmdFile(char* p0) {
 
 /* call http/rest and execute return body as cmd */
 char* cmdRest(char *url) {
-  char* ret=rest(String(url));  if(ret==NULL) { return NULL; } else { return cmdPrg(ret); }
+  char* ret=rest(String(url));  
+  if(!is(ret)) { return NULL; } 
+  sprintf(buffer,"cmdRest %s",ret); logPrintln(LOG_DEBUG,buffer);
+  return cmdPrg(ret);
 }
 
 //-----------------

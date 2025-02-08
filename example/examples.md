@@ -16,8 +16,8 @@ Draw a count-down - <a href='counter.cmd'>counter.cmd</a>
 
 ## line bounce
 ![example](../images/example_line.gif)
-draw a bouncing line 
+draw a bouncing line  <a href='counter.cmd'>line_bounce.cmd</a>
 
 ## random color
-draw random colors
+draw random colors <a href='counter.cmd'>randomColor.cmd</a>
 

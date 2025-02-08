@@ -319,7 +319,7 @@ void effectStart(byte effectType,int effectStep,int effectSpeed,int effectA,int 
 // web
 
 char* cmdSetMatrix(char* p0,char* p1,char* p2,char* p3,char* p4,char* p5) {  
-  if(!isAccess(ACCESS_ADMIN))  { return "ACCESS DENIED"; }
+  if(!isAccess(ACCESS_ADMIN))  { return "ACCESS DENIED setMatrix"; }
   if(is(p0,1,3)) { eeMatrix.panelX=toInt(p0); }
   if(is(p1,1,3)) { eeMatrix.panelY=toInt(p1); }
   if(is(p2,1,2)) { eeMatrix.panelChain=toInt(p2); }  
@@ -479,11 +479,12 @@ char* matrixCmd(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p
     // drawUrl url x y - draw content of url (gif/icon) at a x 
     else if(strcmp(cmd, "drawUrl")==0) { drawUrl(toString(p0),toInt(p1),toInt(p2),false); return EMPTY; }
 
-    // write wifi icon as wifi.bm1 file 
+    /* write wifi icon as wifi.bm1 file 
     else if(strcmp(cmd, "writeIcon")==0) { 
       uint8_t* uint8Ptr = (uint8_t*)reinterpret_cast<const uint8_t*>(wifi_image1bit);
       fsWriteBin("wifi.bm1",uint8Ptr,sizeof(wifi_image1bit)); return EMPTY; 
-    }    
+    } 
+    */   
     // drawIcon x y w h c file - draw icon (bm1) at x,y with w,h of color 
     else if(strcmp(cmd, "drawIcon")==0) { drawIcon(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4),p5); return EMPTY; }
   

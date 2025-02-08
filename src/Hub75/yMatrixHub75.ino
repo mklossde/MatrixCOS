@@ -239,6 +239,7 @@ void drawFull(int x,int y,int w,int h,int p,int value,int max,int col1,int col2)
 
 //-------------------------------------------------------------------
 
+/*
 char wifi_image1bit[] PROGMEM   =  {
  0x01,0x40,0x20,
  0x00,0x00,0x00,0xf8,0x1f,0x00,0x00,0x00,0x00,0x00,0x80,0xff,0xff,0x01,0x00,
@@ -260,6 +261,7 @@ char wifi_image1bit[] PROGMEM   =  {
  0x00,0x00,0x00,0x80,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
  0x00 
  };
+*/
 
 int col_red;
 int col_white;
@@ -269,20 +271,28 @@ int col_blue;
 
 void pageTitle() {
   drawClear();
+
+  // WIFI  
+  drawArc(30,50 ,270, 30, 30, 30, 3, col_red);
+  drawArc(30, 50, 270, 30, 20, 20, 3, col_red);
+  drawArc(30, 50, 270, 30, 10, 10, 3, col_red);
+
+  long val= (100+ WiFi.RSSI())/2;
+  drawSegment(3,3);
+  drawArc(30,50 ,270, val, 30, 30, 3, col_green);
+  drawArc(30, 50, 270, val, 20, 20, 3, col_green);
+  drawArc(30, 50, 270, val, 10, 10, 3, col_green);
+  drawSegment(6,6);
+
+  fillTriangle(30, 50, 0, 0, 0, 50, 0);
+  fillTriangle(30, 50, 64, 0, 64, 50, 0);
+  fillCircle(30, 50, 3, col_red);
+
   drawText(1,1,col_red,1,prgTitle);   
   drawText(1,panelY-8,col_red,1,prgVersion);   
 
-  if(wifi_image1bit!=NULL && panelY>32) { drawIcon(0,20,0,0, col_red,wifi_image1bit,sizeof(wifi_image1bit));  }
-/*
-drawClear
-drawColor 15 0 0 
-drawSegmentArc 30 50 270 30 30 30 3 -1
-drawSegmentArc 30 50 270 30 20 20 3 -1
-drawSegmentArc 30 50 270 30 10 10 3 -1
-fillTriangle 30 50 0 0 0 30 0
-fillTriangle 30 50 64 0 64 30 0
-drawFillCircle 30 55 3 -1
-*/
+  drawFull(55,25,8,20,2,(int)ESP.getFreeHeap(),150000,col_red,col_white);
+  //if(wifi_image1bit!=NULL && panelY>32) { drawIcon(0,20,0,0, col_red,wifi_image1bit,sizeof(wifi_image1bit));  }
 
   if(eeMode<=EE_MODE_AP ) {
     fillRect(panelX-13,panelY-9,panelX,panelY,col_green);

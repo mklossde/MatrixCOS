@@ -24,7 +24,7 @@ It a christmas projet inspired by
  - <a href='doc/Rest.md'>rest control</a>
  - <a href='doc/Timer.md'>autostart and timer</a> 
  - <a href='doc/Multi.md'>multi display</a> 
- - <a href='http://github.com/mklossde/CmdOs'>CmdOS features</a>
+ - <a href='https://github.com/mklossde/CmdOs/blob/main/doc/CmdOsCmds.md'>CmdOS Commands</a>
 	
 ## Command Examples 
 <a href='example/examples.md'>command Examples</a>
