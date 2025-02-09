@@ -256,9 +256,10 @@ void drawFull(int x,int y,int w,int h,int p,int value,int max,int col1,int col2)
   } 
 }
 
+/* draw on button e.g. drawOn 10 10 5 2 1 -1 2016 */
 void drawOn(int x,int y,int w,int p,boolean on,int col1,int col2) {
   drawCircle(x,y,w,col1);
-  if(on) { fillCircle(x+p,y+p,w-(p*2),col2); }
+  if(on) { fillCircle(x,y,w-p,col2); }
 }
 
 void drawValue(int x,int y,char *text,int value,int max,int col1,int col2) {
@@ -276,7 +277,7 @@ void valueFull(int x,int y,char *text,int value,int max,int col1,int col2) {
 void valueOn(int x,int y,char *text,int value,int max,int col1,int col2) {
   drawValue(x,y,text,value,max,col1,col2);
   if(value>max) { col1=col2; }
-  drawOn(x+40,y,8,1,true,_color,col1);
+  drawOn(x+53,y+7,5,1,true,_color,col1);
 }
 
 

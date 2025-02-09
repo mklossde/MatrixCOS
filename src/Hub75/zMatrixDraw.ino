@@ -465,7 +465,7 @@ char* matrixCmd(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p
     
     // drawFull x y w h p value max, c1,c2 - draw a full-element at x,y with w,h. full=100/max*value will be in color c2 and offset p
     else if(strcmp(cmd, "drawFull")==0) { drawFull(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4),toInt(p5),toInt(p6),toInt(p7),toInt(p8)); return EMPTY; }
-    else if(strcmp(cmd, "drawOn")==0) { drawOn(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toBoolean(p4),toInt(p5),toInt(p6)); }
+    else if(strcmp(cmd, "drawOn")==0) { drawOn(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toBoolean(p4),toInt(p5),toInt(p6)); return EMPTY; }
 
     // valueFull x y value max c1 c2 - show value with name at full
     else if(strcmp(cmd, "valueFull")==0) { valueFull(toInt(p0),toInt(p1),p2,toInt(p3),toInt(p4),toInt(p5),toInt(p6)); return EMPTY; }
