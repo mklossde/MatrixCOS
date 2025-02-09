@@ -33,7 +33,7 @@ It a christmas projet inspired by
 ![Display-Example](images/pageEsp.gif)	
 Exmaple of displays esp values on the matrix display
 
-##  Example HomeAssitant / Shelly / Mqtt
+##  Example Home Assistant / Shelly / Mqtt
 ![Display-Example](images/shellyEM.gif)	
 Display power values of a shelly EM (via MQTT) 
 
