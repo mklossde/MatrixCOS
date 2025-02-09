@@ -459,17 +459,20 @@ char* matrixCmd(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p
     // fillCircle x y w c - draw filled circle at x y with radius w 
     else if(strcmp(cmd, "fillCircle")==0) { fillCircle(toInt(p0),toInt(p1),toInt(p2),toInt(p3)); return EMPTY; }
     // drawArc x y angel seg rx ry w c - draw a segment arc at x,y start at angel (0=top), end after seg, with radiusX and radiusY and thikness w 
-    else if(strcmp(cmd, "drawArc")==0) { drawArc(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4),toInt(p5),toInt(p6),toInt(p7)); return EMPTY; }
+    else if(strcmp(cmd, "drawArc")==0) { drawArc(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4),toInt(p5),toInt(p6),toInt(p7),toInt(p8)); return EMPTY; }
     // drawSegment s i - set segemnt step (segmentStep=6,segmentInc=6) segmentStep=6 => full arc have 60 segments, 3=120
-    else if(strcmp(cmd, "drawSegment")==0) { drawSegment(toInt(p0),toInt(p1)); return EMPTY; }
+//    else if(strcmp(cmd, "drawSegment")==0) { drawSegment(toInt(p0),toInt(p1)); return EMPTY; }
     
     // drawFull x y w h p value max, c1,c2 - draw a full-element at x,y with w,h. full=100/max*value will be in color c2 and offset p
     else if(strcmp(cmd, "drawFull")==0) { drawFull(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4),toInt(p5),toInt(p6),toInt(p7),toInt(p8)); return EMPTY; }
     else if(strcmp(cmd, "drawOn")==0) { drawOn(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toBoolean(p4),toInt(p5),toInt(p6)); return EMPTY; }
+    else if(strcmp(cmd, "drawGauge")==0) { drawGauge(toInt(p0),toInt(p1),toInt(p2),toInt(p3),toInt(p4),toInt(p5),toInt(p6),toInt(p7)); return EMPTY; }
 
     // valueFull x y value max c1 c2 - show value with name at full
     else if(strcmp(cmd, "valueFull")==0) { valueFull(toInt(p0),toInt(p1),p2,toInt(p3),toInt(p4),toInt(p5),toInt(p6)); return EMPTY; }
     else if(strcmp(cmd, "valueOn")==0) { valueOn(toInt(p0),toInt(p1),p2,toInt(p3),toInt(p4),toInt(p5),toInt(p6)); return EMPTY; }
+    else if(strcmp(cmd, "valueGauge")==0) { valueGauge(toInt(p0),toInt(p1),p2,toInt(p3),toInt(p4),toInt(p5),toInt(p6)); return EMPTY; }
+
 
     // drawText x y c size text - draw text at x y with size 
     else if(strcmp(cmd, "drawText")==0) { drawText(toInt(p0),toInt(p1),toInt(p2),toInt(p3),p4); return EMPTY; }

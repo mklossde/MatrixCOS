@@ -196,7 +196,7 @@ List attrMap(true);
 
 //-----------------------------------------------------------------------------
 
-/* copy org* to new by ALLOCATE NEW MEMORY 
+/* copy org* to new (NEW CHAR[]
     e.g. char* n=copy(old); 
 */
 char* copy(char* org) { 
@@ -207,7 +207,7 @@ char* copy(char* org) {
   return newStr;
 }
 
-/* create a copy of org with new char[max] */
+/* create a copy of org with new char[max] (NEW CHAR[])*/
 char* copy(char *to,char* org,int max) { 
   if(to==NULL) { to=new char[max+1]; }
   if(to==NULL) { espRestart("copy() memory error"); }
@@ -218,6 +218,7 @@ char* copy(char *to,char* org,int max) {
   return to;
 }
 
+/* copy (MALLOC) */
 char* copy(char *to,String str,int max) { 
   if(to==NULL) { to = (char*)malloc((max + 1)*sizeof(char));  }     
   if(to==NULL) { espRestart("copy() memory error"); }
@@ -227,6 +228,20 @@ char* copy(char *to,String str,int max) {
   }
   return to;
 }
+
+char* copys(String str) {  
+  if(str==NULL || str==EMPTYSTRING) { return NULL; } 
+  char* s = (char*)malloc(str.length() + 1); 
+  if(s==NULL) { espRestart("to() memory error"); }
+  strcpy(s, str.c_str());
+  return s;
+}
+char* copy(String str,char* def) {  
+  if(str==NULL || str==EMPTYSTRING) { return def; } 
+  int len  =str.length()+1; if(len==0) { return def; } char ca[len]; str.toCharArray(ca,len); return(ca);
+}
+
+//------------------------------------
 
 
 /* replace all old_car with new_cahr in str 
@@ -258,6 +273,7 @@ boolean startWith(char *str,char *find) {
   return strcmp(str, find) == 0;
 }
 
+/** extract from src (NEW char[]) */
 char* extract(char *start, char *end, char *src) {
     const char *start_ptr = strstr(src, start); if (!start_ptr) { return NULL; }
     start_ptr += strlen(start);  // Move past 'start'
@@ -316,15 +332,6 @@ char* to(char *a,char *b) { sprintf(buffer,"%s%s",to(a),to(b)); return buffer; }
 char* to(const char *a, const char *b,const char *c) {  sprintf(buffer,"%s%s%s",to(a),to(b),to(c)); return buffer; }
 char* to(const char *a, const char *b,const char *c,const char *d) {  sprintf(buffer,"%s%s%s%s",to(a),to(b),to(c),to(d)); return buffer; }
 char* to(const char *a, const char *b,const char *c,const char *d,const char *e) {  sprintf(buffer,"%s%s%s%s%s",to(a),to(b),to(c),to(d),to(e)); return buffer; }
-
-char* to(String str) {  
-  if(str==NULL || str==EMPTYSTRING) { return NULL; } 
-  char* s = (char*)malloc(str.length() + 1); 
-  if(s==NULL) { espRestart("to() memory error"); }
-  strcpy(s, str.c_str());
-  return s;
-}
-char* to(String str,char* def) {  if(str==NULL || str==EMPTYSTRING) { return def; } int len  =str.length()+1; if(len==0) { return def; } char ca[len]; str.toCharArray(ca,len); return(ca);}
 
 /* convert cahr* to string */
 String toString(const char *text) {  if(!is(text)) { return EMPTYSTRING; } return String(text); }
@@ -834,7 +841,6 @@ void fsSetup() {
 #endif
 
 
-
 //-------------------------------------------------------------------------------------------------------------------
 // LED
 
@@ -1023,7 +1029,6 @@ void swLoop() {
 void swSetup() {}
 void swLoop() {}
 #endif
-
 
 /*
  * Wifi
@@ -1804,8 +1809,6 @@ void otaLoop() {}
 #endif
 
 
-
-
 #if mqttEnable
 
 // MQTT
@@ -1871,7 +1874,7 @@ void mqttSetUrl(char* mqttUrl) {
    mqttPort=atoi(port);
 
    sprintf(buffer,"MQTT set ssl:%d server:%s port:%d user:%s pas:%s", mqttSSL, to(mqttServer),mqttPort,to(mqttUser),to(mqttPas));  logPrintln(LOG_INFO,buffer);
-//   delete[] mqtt;
+//TODO memory leek here   delete[] mqtt; 
 }
 
 /* set mqtt url */
@@ -1927,14 +1930,15 @@ void publishTopic(char* topic,char *message) {
 
 /** subcribe topic to attr **/
 void mqttAttr(char *topic,boolean on) {
-  if(mqttStatus != 2) { return ; }
-  char* t=copy(topic);
+  if(mqttStatus != 2) { return ; }  
   sprintf(buffer,"MQTT attr via topic %s",topic);
   if(on) { 
+    if(attrHave(topic)) {  return ; } // alrady have
+    char* t=copy(topic);
     attrMap.replace(t,(char*)"",0); boolean ok=mqttClient->subscribe(t); 
     sprintf(buffer,"MQTT subsrcibe '%s' attr:%s", topic,topic,ok); logPrintln(LOG_DEBUG,buffer);
   } else { 
-    boolean ok=mqttClient->unsubscribe(t); attrMap.del(t); 
+    boolean ok=mqttClient->unsubscribe(t); attrMap.del(topic); 
     sprintf(buffer,"MQTT unsubsrcibe '%s' attr:%s ok:%d", topic,topic,ok); logPrintln(LOG_DEBUG,buffer);
   } 
 }
@@ -2024,6 +2028,9 @@ void mqttDisconnect() {
   mqttRunning=false;
 }
 
+void mqttOpen(boolean on) {
+  if(on) { mqttInit(); } else { mqttDisconnect(); }
+}
 //-------------------------------------------------------------------------------------
 
 void mqttSetup() {
@@ -2053,6 +2060,7 @@ void mqttLoop() {
   void mqttLog(char *message) {}
   void publishTopic(char* topic,char *message) {} 
 #endif
+
 
 #include <Arduino.h>
 #ifdef ESP32
@@ -2676,8 +2684,7 @@ char* cmdExec(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,
   else if(equals(cmd, "mqtt")) { return mqttSet(p0);  }      // set mqtt (e.g. "mqtt" or "mqtt mqtt://admin:pas@192.168.1.1:1833")  
   else if(equals(cmd, "mqttLog") && isAccess(ACCESS_READ)) { eeBoot.mqttLogEnable=toBoolean(p0);  return EMPTY; } // enable/disbale mqttLog
   else if(equals(cmd,"mqttSend") && isAccess(ACCESS_CHANGE)) { publishTopic(p0,p1); return EMPTY; } // mqtt send topic MESSAGE
-  else if(equals(cmd, "mqttConnect") && isAccess(ACCESS_READ)) { mqttInit(); return EMPTY; }
-  else if(equals(cmd, "mqttDisconnect") && isAccess(ACCESS_READ)) { mqttDisconnect(); return EMPTY; }
+  else if(equals(cmd, "mqttConnect") && isAccess(ACCESS_READ)) { mqttOpen(toBoolean(p0)); return EMPTY; }
   else if(equals(cmd, "mqttAttr") && isAccess(ACCESS_READ)) { mqttAttr(p0,toBoolean(p1)); return EMPTY; }
   
   else if(equals(cmd, "run")) { return cmdFile(p0); } // run prg from file 
@@ -2767,7 +2774,8 @@ char* cmdSet(char *a,char *b,char *c) {
 
 //------------------------------------
 
-char* attrGet(char *p) {  return (char*)attrMap.get(p); }
+boolean attrHave(char *key) { return attrMap.find(key)!=-1; }
+char* attrGet(char *key) {  return (char*)attrMap.get(key); }
 void attrSet(char *key,String value) {    if(is(key)) { char *v=(char*)value.c_str(); attrMap.replace(key,v,strlen(v));} }
 void attrSet(char *key,char *value) {  if(is(key)) {attrMap.replace(key,value,strlen(value)); } }
 void attrDel(char *key) { attrMap.del(key); }
@@ -2952,6 +2960,7 @@ void cmdLoop() {
 }
 
 
+
 void cmdOSSetup() {
   if(serialEnable) { 
     delay(1); Serial.begin(115200); 
@@ -2995,4 +3004,9 @@ void cmdOSLoop() {
   }
   delay(0);
 }
+
+
+
+
+
 

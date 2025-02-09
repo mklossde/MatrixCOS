@@ -205,19 +205,22 @@ void drawIcon(int x, int y, int w,int h,int color,char *xbm,int size) {
 
 //-------------------------------------------------------------------
 
-byte _segmentStep=6; // Segments are 3 degrees wide = 120 segments for 360 degrees
-byte _segmentInc=6; // Draw segments every 3 degrees, increase to 6 for segmented ring
+//byte _segmentStep=6; // Segments are 3 degrees wide = 120 segments for 360 degrees
+//byte _segmentInc=6; // Draw segments every 3 degrees, increase to 6 for segmented ring
 
 /* set _segmentStep and _segmentInc */
-void drawSegment(int segmentStep, int segmentInc) { _segmentStep=segmentStep; _segmentInc=segmentInc; }
+//void drawSegment(int segmentStep, int segmentInc) { _segmentStep=segmentStep; _segmentInc=segmentInc; }
 
 // Draw an segment-arc with a defined thickness
 // x,y == coords of centre of arc
-// start_angle = 0 - 359
-// seg_count = number of 3 degree segments to draw (120 => 360 degree arc)
+// segmentStep (1=360, 3=120, 6=60)
+// start_segemnt = 0 - n (e.g. segmentSep 6, start_segemnt=15 => 90 grad)
+// seg_count = number of segments to draw (segmentStep=3, seg_count=120 => halb circle)
 // rx = x axis radius, yx = y axis radius
 // w  = width (thickness) of arc in pixels
-void drawArc(int x, int y, int start_angle, int seg_count, int rx, int ry, int w, int color) {
+void drawArc(int x, int y, int segmentStep, int seg_start, int seg_count, int rx, int ry, int w, int color) {
+  int segmentInc=segmentStep;
+  int start_angle=seg_start*segmentInc;
   if(!_matrixSetup) { return ; }
   if(color==-1) { color=_color; }  
   float sx = cos((start_angle - 90) * DEG2RAD);
@@ -227,9 +230,9 @@ void drawArc(int x, int y, int start_angle, int seg_count, int rx, int ry, int w
   uint16_t x1 = sx * rx + x;
   uint16_t y1 = sy * ry + y;
 
-  for (int i = start_angle; i < start_angle + _segmentStep * seg_count; i += _segmentInc) {
-    float sx2 = cos((i + _segmentStep - 90) * DEG2RAD);
-    float sy2 = sin((i + _segmentStep - 90) * DEG2RAD);
+  for (int i = start_angle; i < start_angle + segmentStep * seg_count; i += segmentInc) {
+    float sx2 = cos((i + segmentStep - 90) * DEG2RAD);
+    float sy2 = sin((i + segmentStep - 90) * DEG2RAD);
     int x2 = sx2 * (rx - w) + x;
     int y2 = sy2 * (ry - w) + y;
     int x3 = sx2 * rx + x;
@@ -243,7 +246,7 @@ void drawArc(int x, int y, int start_angle, int seg_count, int rx, int ry, int w
   }
 }
 
-/* draw full-bar of value% of max% (e.g. 5 10 => half) */
+/* draw full-bar of value% of max% (e.g. 5 10 => half) e.g. drawFull 10 40 5 20 1 10 50 888 2016 */
 void drawFull(int x,int y,int w,int h,int p,int value,int max,int col1,int col2) {
   if(col1==-1) { col1=_color; }  if(col2==-1) { col2=_color; }  
   drawRect(x,y,w,h,col1);  
@@ -256,30 +259,49 @@ void drawFull(int x,int y,int w,int h,int p,int value,int max,int col1,int col2)
   } 
 }
 
+/* drawGauge 10 10 5 1 5 10 888 2016 */
+void drawGauge(int x,int y,int w,int p,int value,int max,int col1,int col2) {
+  if(col1==-1) { col1=_color; } 
+  drawArc(x,y, 1, 270, 180, w,w, 0, col1);
+  drawLine(x-w,y,x+w,y,col1);
+  int v=(180/max)*value;
+  drawArc(x,y,1,270+v,2,w-p,w-p,w,col2);
+}
 /* draw on button e.g. drawOn 10 10 5 2 1 -1 2016 */
 void drawOn(int x,int y,int w,int p,boolean on,int col1,int col2) {
   drawCircle(x,y,w,col1);
   if(on) { fillCircle(x,y,w-p,col2); }
 }
 
+//-------------------------------------------
+
+/* draw value with name+value */
 void drawValue(int x,int y,char *text,int value,int max,int col1,int col2) {
   drawText(x,y,_color,1,text);
   drawText(x,y+8,col1,1,to(value));
   drawLine(x,y+16,x+63,y+16,_color);
 }
 
+/* draw name+value+full */
 void valueFull(int x,int y,char *text,int value,int max,int col1,int col2) {
   drawValue(x,y,text,value,max,col1,col2);
   if(value<0) { col1=col2; value=value*-1; } 
   drawFull(x+40,y,20,8,1,value,max,_color,col1);
 }
 
+/* draw name+value+on (on=vlaue>max) */
 void valueOn(int x,int y,char *text,int value,int max,int col1,int col2) {
   drawValue(x,y,text,value,max,col1,col2);
   if(value>max) { col1=col2; }
   drawOn(x+53,y+7,5,1,true,_color,col1);
 }
 
+/* draw name+value+guage */
+void valueGauge(int x,int y,char *text,int value,int max,int col1,int col2) {
+  drawValue(x,y,text,value,max,col1,col2);
+  if(value>max) { col1=col2; }
+  drawGauge(x+50,y+10,10,1,value,max,_color,col1);
+}
 
 //-------------------------------------------------------------------
 
@@ -293,19 +315,18 @@ void pageTitle() {
   drawClear();
 
   // WIFI  
-  drawArc(30,50 ,270, 30, 30, 30, 3, col_red);
-  drawArc(30, 50, 270, 30, 20, 20, 3, col_red);
-  drawArc(30, 50, 270, 30, 10, 10, 3, col_red);
+  drawArc(30,50 ,3, 90, 60, 30, 30, 3, col_red);
+  drawArc(30, 50, 3, 90,  60, 20, 20, 3, col_red);
+  drawArc(30, 50, 3, 90, 60, 10, 10, 3, col_red);
 
-  long val= (100+ WiFi.RSSI())/2;
-  drawSegment(3,3);
-  drawArc(30,50 ,270, val, 30, 30, 3, col_green);
-  drawArc(30, 50, 270, val, 20, 20, 3, col_green);
-  drawArc(30, 50, 270, val, 10, 10, 3, col_green);
-  drawSegment(6,6);
+  long val= (100+WiFi.RSSI())/2;
+ 
+  drawArc(30,50 ,3, 90, val, 30, 30, 3, col_green);
+  drawArc(30, 50, 3, 90, val, 20, 20, 3, col_green);
+  drawArc(30, 50, 3, 90, val, 10, 10, 3, col_green);
 
-  fillTriangle(30, 50, 0, 0, 0, 50, 0);
-  fillTriangle(30, 50, 64, 0, 64, 50, 0);
+  fillTriangle(30, 50, 0, 15, 0, 50, 0);
+  fillTriangle(30, 50, 64, 15, 64, 50, 0);
   fillCircle(30, 50, 3, col_red);
 
   drawText(1,1,col_red,1,prgTitle);   

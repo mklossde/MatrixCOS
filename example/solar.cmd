@@ -22,7 +22,7 @@ if $pv >= -1 3
 drawClear
 
 # sun
-drawArc 5 5 80 18 10 10 2 $pc
+drawArc 5 5 6 13 18 10 10 2 $pc
 drawLine 6 15 6 17 $pc
 drawLine 15 6 17 6 $pc 
 drawLine 10 13 12 15 $pc
@@ -41,7 +41,7 @@ drawText 5 53 $pi 1 $pv
 
 #shine
 if $ps < 45
-drawArc 5 5 90 15 $ps $ps 1 65120
+drawArc 5 5 6 15 15 $ps $ps 1 65120
 
 draw
 

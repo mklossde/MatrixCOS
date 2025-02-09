@@ -5,8 +5,6 @@
 	e.g. matrix 64 64 1 90 0 0,15,4,16,27,17,5,18,19,21,12,33,25,22
 - buffer dmaBuffer displayBuffer - (0=off/1=on) enable dmsBuffer or displayBuffer 
 
-- drawSegment s i - set segemnt step (segmentStep=6,segmentInc=6) segmentStep=6 => full arc have 60 segments, 3=120
- 
  ## draw control
 - drawOff => switch display off by clear and stop all
 - drawClear => clear display
@@ -33,10 +31,20 @@
 
 - drawCircle x y w c - draw circle at x y with radius w 
 - fillCircle x y w c - draw filled circle at x y with radius w 
-- drawArc x y angel seg rx ry w c - draw a segment arc at x,y start at angel (0=top), end after seg, with radiusX and radiusY and thikness w 
+- drawArc x y seg seg-start seg rx ry w c - draw a segment arc at x,y start at angel (0=top), end after seg, with radiusX and radiusY and thikness w 
+
+## draw  
 
 - drawFull x y w h p value max, c1,c2 - draw a full-element at x,y with w,h. full=100/max*value will be in color c2 and offset p
+- drawOn  x y r p on col1 col2 e.g. drawOn 10 10 5 2 1 -1 2016
+- drawGauge x y w p value max col1 col2 e.g.  drawGauge 10 10 5 1 5 10 888 2016
 
+## values
+
+-valueFull x y name value max col1 col2 - e.g.  valueFull 1 12 "Power0" $shellies/shellyem3/emeter/0/power 1000 888 444
+-valueOn x y name value max col1 col2 e.g. valueOn 1 30 "Power1" $shellies/shellyem3/emeter/1/power 1000 2016 444
+-valueGauge x y name value max col1 col2 e.g. valueGauge 1 47 "Power2" $shellies/shellyem3/emeter/2/power 100 2016 444  
+  
 ## page 
 
 - pageTest - draw test page - simple dislpay test

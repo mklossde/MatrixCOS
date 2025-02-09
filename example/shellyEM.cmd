@@ -9,8 +9,8 @@ mqttAttr shellies/shellyem3/emeter/2/power 1
   drawColor 15 0 0 
 
   valueFull 1 12 "Power0" $shellies/shellyem3/emeter/0/power 1000 888 444
-  valueFull 1 30 "Power1" $shellies/shellyem3/emeter/1/power 1000 888 444
-  valueFull 1 47 "Power2" $shellies/shellyem3/emeter/2/power 1000 888 444
+  valueOn 1 30 "Power1" $shellies/shellyem3/emeter/1/power 1000 2016 444
+  valueGauge 1 47 "Power2" $shellies/shellyem3/emeter/2/power 100 2016 444
 
   draw
   wait 2000
