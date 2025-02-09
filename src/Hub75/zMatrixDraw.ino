@@ -202,7 +202,7 @@ void drawUpload(AsyncWebServerRequest *request, String file, size_t index, uint8
   ff.close();
   if (final) {
     sprintf(buffer, "uploaded %s => %s %d", file.c_str(),uploadFile, (index + len)); logPrintln(LOG_DEBUG,buffer);
-    char* name=to(file); 
+    char* name=copy(file); 
     drawFile(uploadFile,name,0,0,true);
     delete name;
     request->redirect("/app");
@@ -332,9 +332,12 @@ char* cmdSetMatrix(char* p0,char* p1,char* p2,char* p3,char* p4,char* p5) {
   return matrixInfo();
 }
 
-char* cmdSetBuffer(boolean dmaBuffer, boolean displayBuffer) {
+char* cmdSetMatrix2(boolean dmaBuffer, boolean displayBuffer,int latBlanking,boolean clkphase,char *driver) {
   eeMatrix.dmaBuffer=dmaBuffer;
   eeMatrix.displayBuffer=displayBuffer;
+  eeMatrix.latBlanking=latBlanking;
+  eeMatrix.clkphase=clkphase;
+  if(is(driver)) { eeMatrix.driver=copy(driver); }
   matrixSave();
   return matrixInfo();
 }
@@ -510,8 +513,11 @@ char* matrixCmd(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p
 	  // e.g. matrix 64 64 1 90 0 0,15,4,16,27,17,5,18,19,21,12,33,25,22
     else if(strcmp(cmd, "matrix")==0) { return cmdSetMatrix(p0,p1,p2,p3,p4,p5);  }
     // buffer dmaBuffer displayBuffer - (0=off/1=on) enable dmsBuffer or displayBuffer 
-    else if(strcmp(cmd, "buffer")==0) { return cmdSetBuffer(toBoolean(p0),toBoolean(p1));  }
+    else if(strcmp(cmd, "matrix2")==0) { return cmdSetMatrix2(toBoolean(p0),toBoolean(p1),toInt(p2),toBoolean(p3),p4);  }
 //    else if(strcmp(cmd, "drawEffect")==0) { drawEffect(); return "drawEffect"; }
+
+//    else if(strcmp(cmd, "setLatBlanking")==0) { dma_display->setLatBlanking(toInt(p0)); return EMPTY; } 
+
 
 //    else { return EMPTYSTRING; }
     else { sprintf(buffer,"unkown cmd %s",cmd); return buffer; }

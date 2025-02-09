@@ -229,7 +229,7 @@ char* copy(char *to,String str,int max) {
   return to;
 }
 
-char* copys(String str) {  
+char* copy(String str) {  
   if(str==NULL || str==EMPTYSTRING) { return NULL; } 
   char* s = (char*)malloc(str.length() + 1); 
   if(s==NULL) { espRestart("to() memory error"); }
@@ -841,6 +841,8 @@ void fsSetup() {
 #endif
 
 
+
+
 //-------------------------------------------------------------------------------------------------------------------
 // LED
 
@@ -1029,6 +1031,7 @@ void swLoop() {
 void swSetup() {}
 void swLoop() {}
 #endif
+
 
 /*
  * Wifi
@@ -1809,6 +1812,8 @@ void otaLoop() {}
 #endif
 
 
+
+
 #if mqttEnable
 
 // MQTT
@@ -1938,7 +1943,7 @@ void mqttAttr(char *topic,boolean on) {
     attrMap.replace(t,(char*)"",0); boolean ok=mqttClient->subscribe(t); 
     sprintf(buffer,"MQTT subsrcibe '%s' attr:%s", topic,topic,ok); logPrintln(LOG_DEBUG,buffer);
   } else { 
-    boolean ok=mqttClient->unsubscribe(t); attrMap.del(topic); 
+    boolean ok=mqttClient->unsubscribe(topic); attrMap.del(topic); 
     sprintf(buffer,"MQTT unsubsrcibe '%s' attr:%s ok:%d", topic,topic,ok); logPrintln(LOG_DEBUG,buffer);
   } 
 }
@@ -2060,7 +2065,6 @@ void mqttLoop() {
   void mqttLog(char *message) {}
   void publishTopic(char* topic,char *message) {} 
 #endif
-
 
 #include <Arduino.h>
 #ifdef ESP32
@@ -2960,7 +2964,6 @@ void cmdLoop() {
 }
 
 
-
 void cmdOSSetup() {
   if(serialEnable) { 
     delay(1); Serial.begin(115200); 
@@ -3004,9 +3007,3 @@ void cmdOSLoop() {
   }
   delay(0);
 }
-
-
-
-
-
-

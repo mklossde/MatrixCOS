@@ -24,6 +24,9 @@ typedef struct {
   byte rotation=0;
   boolean dmaBuffer=false;
   boolean displayBuffer=true;
+  byte latBlanking=1;
+  boolean clkphase=true;  
+  char* driver=NULL;
 } eeMatrix_t;
 eeMatrix_t eeMatrix;    // matrix store object 
 
@@ -400,9 +403,10 @@ void pageEsp() {
 }
 
 char* matrixInfo() {
-  sprintf(buffer, "Matrix enabled:%d ok:%d panelX:%d panelY:%d panelChain:%d brightness:%d rotation:%d pins:%s dmaBuffer:%d disBuffer:%d",
+  sprintf(buffer, "Matrix enabled:%d ok:%d panelX:%d panelY:%d panelChain:%d brightness:%d rotation:%d pins:%s dmaBuffer:%d disBuffer:%d latBlanking:%d clkphase:%d",
     matrixEnable,_matrixSetup,eeMatrix.panelX,eeMatrix.panelY,eeMatrix.panelChain,eeMatrix.brightness,eeMatrix.rotation,eeMatrix.pins,
-    eeMatrix.dmaBuffer,eeMatrix.displayBuffer);
+    eeMatrix.dmaBuffer,eeMatrix.displayBuffer,
+    eeMatrix.latBlanking, eeMatrix.clkphase);
     return buffer;
 }
 
@@ -470,8 +474,11 @@ void matrixSetup() {
   // Module configuration
   HUB75_I2S_CFG mxconfig(eeMatrix.panelX, eeMatrix.panelY, eeMatrix.panelChain,_pins );
   mxconfig.double_buff = eeMatrix.dmaBuffer; // enable/disable buffer
-//TODO HUB75_I2S_CFG::FM6126A driver chip  
   _matrixSetup=true;  
+
+//TODO driver  if(is(eeMatrix.driver)) { mxconfig.driver = eeMatrix.driver; }
+
+  mxconfig.clkphase = eeMatrix.clkphase;
 
   // Display Setup
   dma_display = new MatrixPanel_I2S_DMA(mxconfig);
@@ -480,6 +487,8 @@ void matrixSetup() {
   col_black=dma_display->color444(0,0,0);  
   col_green=dma_display->color444(0,15,0);  
   col_blue=dma_display->color444(0,0,15);  
+
+  dma_display->setLatBlanking(eeMatrix.latBlanking);
 
   if(eeMatrix.displayBuffer) { 
     display=new GFXcanvas16(eeMatrix.panelX, eeMatrix.panelY);  
