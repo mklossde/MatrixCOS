@@ -3,6 +3,19 @@
 
 MatrixCOS use <a href='https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA'>ESP32-HUB75-MatrixPanel-DMA</a>
 
+
+## installtion
+
+Easy was to install the bin via <a href='https://web.esphome.io/'>esp-web-tools</a>
+- Connect to ESP
+- Install (seclect firmware from bin directory)
+
+
+Or use the <a href='https://github.com/esphome/esphome-flasher/releases'>esphome-flasher</a>
+Or use the <a href='https://github.com/Jason2866/ESP_Flasher/releases/'>ESP-Flasher.</a>
+
+
+
 ## hardware config
 The config requires some basic entrys
 - sizeX - number of pixel in one row (0..n)
