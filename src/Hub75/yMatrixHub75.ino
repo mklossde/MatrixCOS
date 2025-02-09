@@ -7,6 +7,8 @@
 MatrixPanel_I2S_DMA *dma_display = nullptr;
 Adafruit_GFX *display=NULL;
 
+boolean _matrixSetup=false; // matrix setup ok
+
 //-----------------------------------------------------------
 // Panel Connetons (GPIO)
 
@@ -37,6 +39,7 @@ uint16_t _color;
 
 /** draw actual screen => flip to back buffer **/
 void draw() {
+  if(!_matrixSetup) { return ; }
   if(eeMatrix.dmaBuffer) { dma_display->flipDMABuffer(); }// Show the back buffer, set currently output buffer to the back (i.e. no longer being sent to LED panels)
   else if(eeMatrix.displayBuffer) {
     GFXcanvas16 *canvas=(GFXcanvas16*)display;  
@@ -49,55 +52,68 @@ void draw() {
 /* clear display */
 void drawClear() {   
 //  draw();
+  if(!_matrixSetup) { return ; }
   if(eeMatrix.displayBuffer) { display->fillRect(0,0,eeMatrix.panelX,eeMatrix.panelY,0); }
   else { dma_display->clearScreen(); }
   drawShowTitle=false;
 } 
 
 /* color color */
-uint16_t toColor444(int r,int g,int b) { return dma_display->color444(r, g, b); }
-uint16_t toColor565(int r,int g,int b) {  return dma_display->color565(r, g, b); }
+uint16_t toColor444(int r,int g,int b) { if(!_matrixSetup) { return -1; } return dma_display->color444(r, g, b); }
+uint16_t toColor565(int r,int g,int b) { if(!_matrixSetup) { return -1; } return dma_display->color565(r, g, b); }
 
 /* set Brightness 0-255 **/
-void matrixBrightness(int b) {  dma_display->setBrightness8(b); } 
+void matrixBrightness(int b) {  if(!_matrixSetup) { return ; } dma_display->setBrightness8(b); } 
 
 //------------------------------------------------------------------------------
 
 void drawColor(uint16_t color) { _color=color; }
 
 /* fill with color (red,green,blue=0..15) */
-void fillScreen(int color) { if(color==-1) { color=_color; } display->fillScreen(color);  } 
+void fillScreen(int color) { if(!_matrixSetup) { return ; } if(color==-1) { color=_color; } display->fillScreen(color);  } 
 
 /* draw line */
-void drawPixel(uint16_t x, uint16_t y, uint16_t color) { if(color==-1) { color=_color; } display->drawPixel(x,y, color); }  
+void drawPixel(uint16_t x, uint16_t y, uint16_t color) { 
+  if(!_matrixSetup) { return ; } if(color==-1) { color=_color; } display->drawPixel(x,y, color); }  
 /* draw line */
-void drawLine(int x,int y, int w,int h,int color) { if(color==-1) { color=_color; } display->drawLine(x,y,w,h, color); }    
+void drawLine(int x,int y, int w,int h,int color) { if(!_matrixSetup) { return ; } if(color==-1) { color=_color; } display->drawLine(x,y,w,h, color); }    
 /* draw rec */
-void drawRect(int x,int y, int w,int h,int color) { if(color==-1) { color=_color; } display->drawRect(x,y,w,h, color); }   
+void drawRect(int x,int y, int w,int h,int color) {if(!_matrixSetup) { return ; } if(color==-1) { color=_color; } display->drawRect(x,y,w,h, color); }   
 /* draw fill rec */
-void fillRect(int x,int y, int w,int h,int color) { if(color==-1) { color=_color; } display->fillRect(x,y,w,h, color); }  
+void fillRect(int x,int y, int w,int h,int color) { if(!_matrixSetup) { return ; }if(color==-1) { color=_color; } display->fillRect(x,y,w,h, color); }  
 
 // drawTriangle x y x2 y2 x3 y3 c - draw a trinagle (from x,y to x2,y2 to x3,y3 to x,y)
 void drawTriangle(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color) {
+  if(!_matrixSetup) { return ; }
   if(color==-1) { color=_color; } display->drawTriangle(x0,y0,x1,y1,x2,y2,color);
 }
 // fillTriangle x y x2 y2 x3 y3 c -  draw a filled triangle
 void fillTriangle(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color) {
+  if(!_matrixSetup) { return ; }
   if(color==-1) { color=_color; } display->fillTriangle(x0,y0,x1,y1,x2,y2,color);
 }
 
 // drawCircle x y w c - draw circle at x y with radius w 
-void drawCircle(int x,int y, int w,int color) { if(color==-1) { color=_color; } display->drawCircle(x,y,w, color); }   
+void drawCircle(int x,int y, int w,int color) { 
+  if(!_matrixSetup) { return ; } if(color==-1) { color=_color; } display->drawCircle(x,y,w, color); }   
 // draw filled circle at x y with radius w 
-void fillCircle(int x,int y, int w,int color) { if(color==-1) { color=_color; } display->fillCircle(x,y,w, color); }  
+void fillCircle(int x,int y, int w,int color) { 
+  if(!_matrixSetup) { return ; } if(color==-1) { color=_color; } display->fillCircle(x,y,w, color); }  
 
 
 
-void drawRoundRect(uint16_t x0, uint16_t y0, uint16_t w, uint16_t h, uint16_t radius, uint16_t color) { if(color==-1) { color=_color; } display->drawRoundRect(x0,y0,w,h,radius,color); }
-void fillRoundRect(uint16_t x0, uint16_t y0, uint16_t w, uint16_t h, uint16_t radius, uint16_t color) { if(color==-1) { color=_color; } display->drawRoundRect(x0,y0,w,h,radius,color);  }
+void drawRoundRect(uint16_t x0, uint16_t y0, uint16_t w, uint16_t h, uint16_t radius, uint16_t color) { 
+  if(!_matrixSetup) { return ; }
+  if(color==-1) { color=_color; } display->drawRoundRect(x0,y0,w,h,radius,color); }
+void fillRoundRect(uint16_t x0, uint16_t y0, uint16_t w, uint16_t h, uint16_t radius, uint16_t color) { 
+  if(!_matrixSetup) { return ; }
+  if(color==-1) { color=_color; } display->drawRoundRect(x0,y0,w,h,radius,color);  }
 
-void drawChar(uint16_t x, uint16_t y, char c, uint16_t color, uint16_t bg, uint8_t size) { if(color<0) { color=_color; } display->drawChar(x,y,c,color,bg,size); }
+void drawChar(uint16_t x, uint16_t y, char c, uint16_t color, uint16_t bg, uint8_t size) { 
+  if(!_matrixSetup) { return ; }
+  if(color<0) { color=_color; } display->drawChar(x,y,c,color,bg,size); }
 void drawText(int x,int y, int color, int size, const char *str) {
+  if(!_matrixSetup) { return ; }
   if(color<0) { color=_color; }
   display->setTextSize(size);     // size 1 == 8 pixels high
   display->setTextWrap(true); // Don't wrap at end of line - will do ourselves
@@ -107,6 +123,7 @@ void drawText(int x,int y, int color, int size, const char *str) {
 }
 
 void drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h, uint16_t color) {
+  if(!_matrixSetup) { return ; }
   if(color<0) { color=_color; } display->drawBitmap(x,y,bitmap,w,h,color);
 }
 
@@ -142,6 +159,7 @@ void matrixHub75_icon(int x, int y, int color,char *xbm,int size) {
  *    convert tool https://javl.github.io/image2cpp/
 */
 void drawIcon(int x, int y, int w,int h,int color,char *xbm,int size) {
+  if(!_matrixSetup) { return ; }
   if(xbm==NULL || size<3) { return ; } // empty
   int index=0;
   int type=pgm_read_byte(xbm+index++); // type
@@ -200,6 +218,7 @@ void drawSegment(int segmentStep, int segmentInc) { _segmentStep=segmentStep; _s
 // rx = x axis radius, yx = y axis radius
 // w  = width (thickness) of arc in pixels
 void drawArc(int x, int y, int start_angle, int seg_count, int rx, int ry, int w, int color) {
+  if(!_matrixSetup) { return ; }
   if(color==-1) { color=_color; }  
   float sx = cos((start_angle - 90) * DEG2RAD);
   float sy = sin((start_angle - 90) * DEG2RAD);
@@ -237,31 +256,31 @@ void drawFull(int x,int y,int w,int h,int p,int value,int max,int col1,int col2)
   } 
 }
 
-//-------------------------------------------------------------------
+void drawOn(int x,int y,int w,int p,boolean on,int col1,int col2) {
+  drawCircle(x,y,w,col1);
+  if(on) { fillCircle(x+p,y+p,w-(p*2),col2); }
+}
 
-/*
-char wifi_image1bit[] PROGMEM   =  {
- 0x01,0x40,0x20,
- 0x00,0x00,0x00,0xf8,0x1f,0x00,0x00,0x00,0x00,0x00,0x80,0xff,0xff,0x01,0x00,
- 0x00,0x00,0x00,0xf0,0xff,0xff,0x07,0x00,0x00,0x00,0x00,0xfc,0xff,0xff,0x1f,
- 0x00,0x00,0x00,0x00,0xfe,0x07,0xe0,0x7f,0x00,0x00,0x00,0x80,0xff,0x00,0x00,
- 0xff,0x01,0x00,0x00,0xc0,0x1f,0x00,0x00,0xf8,0x03,0x00,0x00,0xe0,0x0f,0x00,
- 0x00,0xf0,0x07,0x00,0x00,0xf0,0x03,0xf0,0x0f,0xc0,0x0f,0x00,0x00,0xe0,0x01,
- 0xff,0xff,0x80,0x07,0x00,0x00,0xc0,0xc0,0xff,0xff,0x03,0x03,0x00,0x00,0x00,
- 0xe0,0xff,0xff,0x07,0x00,0x00,0x00,0x00,0xf8,0x0f,0xf0,0x1f,0x00,0x00,0x00,
- 0x00,0xfc,0x01,0x80,0x3f,0x00,0x00,0x00,0x00,0x7c,0x00,0x00,0x3e,0x00,0x00,
- 0x00,0x00,0x38,0x00,0x00,0x1c,0x00,0x00,0x00,0x00,0x10,0xe0,0x07,0x08,0x00,
- 0x00,0x00,0x00,0x00,0xfc,0x3f,0x00,0x00,0x00,0x00,0x00,0x00,0xfe,0x7f,0x00,
- 0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x1f,0xf8,
- 0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x60,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
- 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
- 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x80,0x01,0x00,0x00,0x00,0x00,0x00,
- 0x00,0xc0,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0xe0,0x07,0x00,0x00,0x00,0x00,
- 0x00,0x00,0xe0,0x07,0x00,0x00,0x00,0x00,0x00,0x00,0xc0,0x03,0x00,0x00,0x00,
- 0x00,0x00,0x00,0x80,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
- 0x00 
- };
-*/
+void drawValue(int x,int y,char *text,int value,int max,int col1,int col2) {
+  drawText(x,y,_color,1,text);
+  drawText(x,y+8,col1,1,to(value));
+  drawLine(x,y+16,x+63,y+16,_color);
+}
+
+void valueFull(int x,int y,char *text,int value,int max,int col1,int col2) {
+  drawValue(x,y,text,value,max,col1,col2);
+  if(value<0) { col1=col2; value=value*-1; } 
+  drawFull(x+40,y,20,8,1,value,max,_color,col1);
+}
+
+void valueOn(int x,int y,char *text,int value,int max,int col1,int col2) {
+  drawValue(x,y,text,value,max,col1,col2);
+  if(value>max) { col1=col2; }
+  drawOn(x+40,y,8,1,true,_color,col1);
+}
+
+
+//-------------------------------------------------------------------
 
 int col_red;
 int col_white;
@@ -359,8 +378,8 @@ void pageEsp() {
 }
 
 char* matrixInfo() {
-  sprintf(buffer, "Matrix panelX:%d panelY:%d panelChain:%d brightness:%d rotation:%d pins:%s dmaBuffer:%d disBuffer:%d",
-    eeMatrix.panelX,eeMatrix.panelY,eeMatrix.panelChain,eeMatrix.brightness,eeMatrix.rotation,eeMatrix.pins,
+  sprintf(buffer, "Matrix enabled:%d ok:%d panelX:%d panelY:%d panelChain:%d brightness:%d rotation:%d pins:%s dmaBuffer:%d disBuffer:%d",
+    matrixEnable,_matrixSetup,eeMatrix.panelX,eeMatrix.panelY,eeMatrix.panelChain,eeMatrix.brightness,eeMatrix.rotation,eeMatrix.pins,
     eeMatrix.dmaBuffer,eeMatrix.displayBuffer);
     return buffer;
 }
@@ -385,7 +404,6 @@ void matrixLoad() {
     eeAppPos,eeMatrix.panelX,eeMatrix.panelY,eeMatrix.panelChain,eeMatrix.brightness,eeMatrix.rotation,eeMatrix.pins);logPrintln(LOG_INFO,buffer);
 }
 
-boolean _matrixSetup=false; // matrix setup ok
 
 boolean matrixInit() {
     matrixLoad(); // load eeMatrix
@@ -393,7 +411,8 @@ boolean matrixInit() {
 
     panelX=eeMatrix.panelX;
     panelY=eeMatrix.panelY;
-    
+    if(panelX<=0 || panelY<=0) { sprintf(buffer,"matrix size wrong %d %d",panelX,panelY); logPrintln(LOG_ERROR,buffer); return false; }
+
     char* temp = strdup(eeMatrix.pins);  // Duplicate the string to avoid modifying the original
     char* token = strtok(temp, ",");
     int index = 0;
@@ -416,7 +435,7 @@ boolean matrixInit() {
     sprintf(buffer, "pins r1:%d g1:%d b1:%d r2:%d g2:%d b2:%d a:%d b:%d c:%d e:%d lat:%d oe:%d clk:%d",
       _pins.r1, _pins.g1, _pins.b1, _pins.r2, _pins.g2, _pins.b2, _pins.a, _pins.b, _pins.c, _pins.d, _pins.e, _pins.lat, _pins.oe, _pins.clk);
     logPrintln(LOG_INFO,buffer);
-
+    
     free(temp);  // Free the duplicated string
     return true;
 }

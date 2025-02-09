@@ -73,19 +73,22 @@ void webApp() {
         })
 //TODO  .addMiddleware(&basicAuth)
     ;
-
-    
-
-
 }
 
 //--------------------------------------------------------------
 
 void setup() {
-  appSetup();
-
+  cmdOSSetup();
+  if(isModeOk()) { 
+    matrixSetup();
+  }  
 }
 
 void loop() {
-  appLoop();
+  cmdOSLoop();
+  if(isModeOk()) { 
+    drawLoop();
+    matrixLoop();
+    effectLoop();
+  }  
 }

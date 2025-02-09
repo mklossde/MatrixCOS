@@ -374,12 +374,13 @@ char* espInfo() {
     return buffer;
 }
 
-/* enlabel info */
+/* enlabel info 
 char* enableInfo() {
    sprintf(buffer,"serialEnable:%d cmdEnable:%d ledEnable:%d swEnable:%d wifiEnable:%d webEnable:%d updateEnable:%d mdnsEnable:%d mqttEnable:%d",
     serialEnable,cmdEnable,ledEnable,swEnable,wifiEnable,webEnable,updateEnable,mdnsEnable,mqttEnable);
    return buffer; 
 }
+*/
 
 //-----------------------------------------------------------------------------
 // Time
@@ -832,6 +833,8 @@ void fsSetup() {
   void fsFormat() {}
 #endif
 
+
+
 //-------------------------------------------------------------------------------------------------------------------
 // LED
 
@@ -1021,6 +1024,7 @@ void swSetup() {}
 void swLoop() {}
 #endif
 
+
 /*
  * Wifi
  */
@@ -1065,6 +1069,10 @@ eeBoot_t eeBoot;    // bootloader data
 //-------------------------------------------------------------------------------------------------------------------
 // EEPROM
 
+boolean isModeOk() { return eeMode>EE_MODE_AP && eeMode<EE_MODE_ERROR; }
+boolean isModeNoSystemError() { return eeMode<EE_MODE_SYSERROR; }
+
+ 
 
 /* save to ee */
 void eeSave() {
@@ -1096,6 +1104,10 @@ void eeSetMode(byte mode) {
   EEPROM.begin(EEBOOTSIZE);
   EEPROM.put( 5, mode );
   EEPROM.end(); 
+}
+
+void setMode(byte mode) {
+  eeSetMode(mode);
   eeMode=mode;
 }
 
@@ -1138,14 +1150,14 @@ void eeSetup() {
   }else if(eeMode==EE_MODE_ERROR) {
     if(serialEnable) { Serial.println("### MODE ERROR "); }
     setAccess(true);
-    eeSetMode(EE_MODE_SYSERROR); // mark 
+    setMode(EE_MODE_SYSERROR);  // mark 
   } else if(eeMode==EE_MODE_SYSERROR) {
     setAccess(true);
     if(serialEnable) { Serial.println("### MODE SYSERROR "); }
 
   }else if(eeMode==EE_MODE_OK) { 
     if(serialEnable) { Serial.println("### MODE OK -> START"); }
-    eeSetMode(EE_MODE_START); // mark  
+    setMode(EE_MODE_START); // mark  
 
   }else if(eeMode>EE_MODE_WRONG) {
     if(serialEnable) { Serial.println("### MODE RE-INIT"); }
@@ -1166,7 +1178,7 @@ int okWait=10000; // wait 10s before start => ok
 
 void eeLoop() {
   if(eeMode<EE_MODE_ERROR && eeMode>=EE_MODE_START && isTimer(eeTime, okWait)) { 
-    eeSetMode(EE_MODE_OK); // mark  ok after start
+    setMode(EE_MODE_OK);  // mark  ok after start
   }
 }
 
@@ -1194,7 +1206,7 @@ void bootSave() {
 
   // auto set WIFI_CL_TRY when in AP
   if((eeMode<EE_MODE_WIFI_OFF) && is(eeBoot.wifi_ssid) && is(eeBoot.wifi_pas)) {
-    eeSetMode(EE_MODE_WIFI_TRY);
+    setMode(EE_MODE_WIFI_TRY); 
   }
  
   eeSave();
@@ -1244,11 +1256,6 @@ void bootPrivat() {
   sprintf(eeBoot.espPas,user_pas);   // my privat WIFI password of AccessPoint
   sprintf(eeBoot.mqtt,mqtt_default);            // my privat MQTT server
   eeMode=EE_MODE_PRIVAT; // set privat mode 
-}
-
-char* bootMode(int mode) {
-  if(mode>=0) { eeSetMode(mode); }
-  return bootInfo();  
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -1611,7 +1618,7 @@ void wifiConnecting() {
       sprintf(buffer,"WIFI mode:%d Connectd IP:%s Gateway:%s DNS:%s ", eeMode,appIP.c_str(), gw, WiFi.dnsIP().toString()); logPrintln(LOG_SYSTEM,buffer); 
       wifiStat=WIFI_CON_CONNECTED;
 
-      if(eeMode==EE_MODE_WIFI_TRY) { eeSetMode(EE_MODE_OK); eeSave(); } // try => cl  
+      if(eeMode==EE_MODE_WIFI_TRY) { setMode(EE_MODE_OK); } // try => cl  
       ledOff();
 
       // enable services
@@ -1631,7 +1638,7 @@ void wifiConnecting() {
       
       } else if( eeMode == EE_MODE_WIFI_TRY) {  // try faild
         sprintf(buffer,"WIFI error CL-TRY ssid:%s reset to AP", eeBoot.wifi_ssid); logPrintln(LOG_SYSTEM,buffer); 
-        eeSetMode(EE_MODE_SETUP); eeSave(); espRestart("no wifi, fallback setup"); // fallback to AccessPoint on faild try      
+        setMode(EE_MODE_SETUP); espRestart("no wifi, fallback setup"); // fallback to AccessPoint on faild try      
 
       } else {
          //sprintf(buffer,"WIFI error connect ssid:%s mode:%d", eeBoot.wifi_ssid,eeBoot.mode); logPrintln(LOG_SYSTEM,buffer); 
@@ -1661,6 +1668,7 @@ void wifiStart() {
 /* try connect wifi*/
 void wifiTry() {
 //TODO  ledBlinkPattern(0,&ledPattern2Flash); // Blink unlimeted 2Flash
+  eeSetMode(EE_MODE_SETUP); // set FALLBACK ON ERROR
   sprintf(buffer,"WIFI try connecting SSID:%s ...", eeBoot.wifi_ssid); logPrintln(LOG_INFO,buffer); 
   delay(10);  
   WiFi.persistent(false);
@@ -1731,6 +1739,10 @@ void wifiInit() {
     }
 }
 
+char* bootMode(int mode) {
+  if(mode>=0) { setMode(mode); wifiInit(); }
+  sprintf(buffer,"%d",eeMode); return buffer;
+}
 
 //----------------------------
 
@@ -1745,8 +1757,8 @@ void wifiLoop() {
 }
 
 void wifiStart(boolean on) { 
-  wifiEnable=on; if(on) { eeSetMode(EE_MODE_WIFI_TRY); wifiSetup(); } 
-  else { WiFi.mode(WIFI_OFF); eeSetMode(EE_MODE_WIFI_OFF); }
+  wifiEnable=on; if(on) { setMode(EE_MODE_WIFI_TRY); wifiSetup(); } 
+  else { WiFi.mode(WIFI_OFF); setMode(EE_MODE_WIFI_OFF); }
 }
 
 //-------------------------------------------------------------
@@ -1793,6 +1805,7 @@ void otaLoop() {}
 
 
 
+
 #if mqttEnable
 
 // MQTT
@@ -1830,7 +1843,7 @@ char* mqttInfo() {
   if(!is(eeBoot.mqtt) || !is(mqttUser) || !is(mqttServer) ) { return "mqtt not defined"; }
   char *type="mqtt"; if(mqttSSL) { type="mqtts"; }  
   if(is(mqttUser)) {
-    sprintf(buffer,"MQTT status:%d  %s://%s:%d@%s:%d (ee:%s)",
+    sprintf(buffer,"MQTT status:%d type:%s user:%s pas:%d server:%s port:%d (ee:%s)",
       mqttStatus,type,to(mqttUser),is(mqttPas),to(mqttServer),mqttPort,to(eeBoot.mqtt)); return buffer;
   }else { sprintf(buffer,"MQTT status:%d  %s://%s:%d (ee:%s)",mqttStatus,type,to(mqttServer),mqttPort,to(eeBoot.mqtt)); return buffer;}
 }
@@ -1838,7 +1851,7 @@ char* mqttInfo() {
 /* split mqtt-url */
 void mqttSetUrl(char* mqttUrl) {
   mqttUser=NULL; mqttPas=NULL; mqttServer=NULL; mqttPort=1833;  
-  if(!is(mqttUrl,1,127)) { logPrintln(LOG_ERROR,"MQTT missing/wrong"); return ; }
+  if(!is(mqttUrl,3,127)) { logPrintln(LOG_ERROR,"MQTT missing/wrong"); return ; }
 
   char *mqtt=copy(mqttUrl);  
    if(strncmp(mqtt, "mqtt://",7)==0) { mqttSSL=false;  } 
@@ -1858,7 +1871,7 @@ void mqttSetUrl(char* mqttUrl) {
    mqttPort=atoi(port);
 
    sprintf(buffer,"MQTT set ssl:%d server:%s port:%d user:%s pas:%s", mqttSSL, to(mqttServer),mqttPort,to(mqttUser),to(mqttPas));  logPrintln(LOG_INFO,buffer);
-   delete[] mqtt;
+//   delete[] mqtt;
 }
 
 /* set mqtt url */
@@ -2040,7 +2053,6 @@ void mqttLoop() {
   void mqttLog(char *message) {}
   void publishTopic(char* topic,char *message) {} 
 #endif
-
 
 #include <Arduino.h>
 #ifdef ESP32
@@ -2432,7 +2444,7 @@ void webSetupDevice(AsyncWebServerRequest *request) {
   if(setupDevice>0) {
     String name=webParam(request,"name");
     char *setupName=NULL; if(name!=NULL) { setupName=(char*)name.c_str(); } 
-    sprintf(buffer,"setup \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"",to(eeBoot.wifi_ssid),to(eeBoot.wifi_pas),to(setupName),to(eeBoot.espPas),
+    sprintf(buffer,"setup %s %s \"%s\" %s %s",to(eeBoot.wifi_ssid),to(eeBoot.wifi_pas),to(setupName),to(eeBoot.espPas),
       to(eeBoot.mqtt));
     request->send(200, "text/plain", buffer);     
     if(setupDevice<255) { setupDevice--;}
@@ -2586,7 +2598,6 @@ void webStart(boolean on) {
   webEnable = on;
   webSetup();
 }
-
 
 // Serial Command Line
 
@@ -2926,7 +2937,7 @@ int startupWait=10000; // wait before startup.cmd
 
 void cmdLoop() {
   // serial in
-  if(cmdEnable && isTimer(cmdTime, 10)) { cmdRead(); } // exec cmd 
+  if(serialEnable && isTimer(cmdTime, 10)) { cmdRead(); } // exec cmd 
   // prg
   if(eeMode<EE_MODE_SYSERROR) {
     if(_prgPtr!=NULL && isTimer(_prgTime, _cmdWait)) {  _cmdWait=0; prgLoop();  } 
@@ -2941,6 +2952,47 @@ void cmdLoop() {
 }
 
 
+void cmdOSSetup() {
+  if(serialEnable) { 
+    delay(1); Serial.begin(115200); 
+    delay(1); Serial.println("----------------------------------------------------------------------------------------------------------------------");
+  }
+  eeSetup();
+  ledSetup();  
+  swSetup(); 
+  bootSetup();
+  
+  fsSetup();
 
+  if(isModeNoSystemError()) {
+    wifiSetup();  
+    otaSetup();
+  }
 
+  if(isModeOk()) {
+    mqttSetup();  
+    timeSteup();  
+  }
+}
+
+void cmdOSLoop() {
+  eeLoop();
+  ledLoop(); 
+  swLoop(); 
+  cmdLoop();
+
+  timeLoop();
+
+  if(isModeNoSystemError()) {
+    wifiLoop();
+    otaLoop();
+  }
+
+  if(isModeOk()) {
+    mqttLoop();
+    webLoop();
+    timeLoop();
+  }
+  delay(0);
+}
 

@@ -17,8 +17,8 @@ It a christmas projet inspired by
 ![Display-Title](images/pageTitle.gif)	
 
 ## Feature 
+ - <a href='doc/Config.md'>Hardware install and config</a>
  - <a href='doc/Commands.md'>matrix commands</a>
- - <a href='doc/Config.md'>display config</a>
  - <a href='doc/Web.md'>web control</a> 
  - <a href='doc/Mqtt.md'>mqtt control</a>
  - <a href='doc/Rest.md'>rest control</a>
@@ -32,6 +32,26 @@ It a christmas projet inspired by
 ##  Example show values 
 ![Display-Example](images/pageEsp.gif)	
 Exmaple of displays esp values on the matrix display
+
+##  Example ShellyEM
+![Display-Example](images/shellyEM.gif)	
+Display power values of a shelly EM (via MQTT) 
+
+	mqttAttr shellies/shellyem3/emeter/0/power 1
+	mqttAttr shellies/shellyem3/emeter/1/power 1 
+	mqttAttr shellies/shellyem3/emeter/2/power 1
+	#loop
+	  drawClear
+	  drawColor 15 15 15
+	  drawText 5 1 -1 1 "Shelly EM"
+	  drawColor 15 0 0 
+	  valueFull 1 12 "Power0" $shellies/shellyem3/emeter/0/power 1000 888 444
+	  valueFull 1 30 "Power1" $shellies/shellyem3/emeter/1/power 1000 888 444
+	  valueFull 1 47 "Power2" $shellies/shellyem3/emeter/2/power 1000 888 444
+	  draw
+	  wait 2000
+	  goto #loop
+
 
 ##  Example disaply animated gif
 ![Display-Example](images/example_image.gif)
