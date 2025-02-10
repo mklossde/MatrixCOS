@@ -5,7 +5,7 @@ develop by mk@almi.de
 
 ![CmdOS LOGO](images/Hub75_logo.gif)
 
-If you use/like this project please <a href='http://paypal.me/openonorg<'>donate to http://paypal.me/openonorg</a> (a good choise is 1Euro per ESP a year ;-)
+If you use/like this project please [http://paypal.me/openonorg](https://buymeacoffee.com/openon) (a good choise is 1Euro per ESP a year ;-)
 
 This Application based on <a href="http://github.com/mklossde/CmdOs">Use CmdOS V0.1.0</a>
 
