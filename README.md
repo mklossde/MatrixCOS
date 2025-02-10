@@ -18,12 +18,12 @@ It a christmas projet inspired by
 ##  Example animation gif frame
 ![Display-Example](images/frame1.gif)
 ![Display-Example](images/frame2.gif)		
-![Display-Example](images/example_image.gif)
 Display images as a pixel frame 
 
 ##  Example Home Assistant / Shelly / Mqtt
 ![Display-Example](images/pageEsp.gif)	
 ![Display-Example](images/shellyEM.gif)	
+![Display-Example](images/example_pv2.gif)	
 Display power values of a shelly EM (via MQTT) 
 
 	mqttAttr shellies/shellyem3/emeter/0/power 1
