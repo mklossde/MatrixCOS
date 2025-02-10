@@ -62,6 +62,6 @@ Display power values of a shelly EM (via MQTT)
 
 [<a href="libs.md">Require Libs</a>]
 
-If you use/like this project please [http://paypal.me/openonorg](https://buymeacoffee.com/openon) (a good choise is 1Euro per ESP a year ;-)  
+If you use/like this project please [https://buymeacoffee.com/openon](https://buymeacoffee.com/openon) (a good choise is 1Euro per ESP a year ;-)  
 ![LOGO](images/Hub75_logo_32x32.gif) a OpenOn.org project - develop by mk@almi.de 
 
