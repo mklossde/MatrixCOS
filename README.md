@@ -58,7 +58,7 @@ Display power values of a shelly EM (via MQTT)
 
 ## Setup
 	matrix 64 64 1 90 0 0,15,4,16,27,17,5,18,19,21,12,33,25,22
-	
+	matrix2 0 1 1 0
 
 
 [<a href="libs.md">Require Libs</a>]

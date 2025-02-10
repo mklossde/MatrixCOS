@@ -51,6 +51,13 @@ The config requires some basic entrys
 Config via matrix command (for the ESP32-DevKitC-Board with HoDi-Platine)
 
 	e.g. matrix 64 64 1 90 0 0,15,4,16,27,17,5,18,19,21,12,33,25,22
+		matrix2 0 1 1 0
+		
+Setup extended via matrix2
+- DmaBuffer
+- ImageBuffer 	
+- 
+	matrix2 0 1 1 0
 	
 Config via web with 
 	http://ESPNAME.local/appSetup
