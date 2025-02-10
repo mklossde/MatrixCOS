@@ -27,6 +27,6 @@ draw a bouncing line  <a href='counter.cmd'>line_bounce.cmd</a>
 draw random colors <a href='counter.cmd'>randomColor.cmd</a>
 
 ## chart
-draw a chart  a href='chart.cmd'>chart.cmd</a>
+draw a chart  <a href='chart.cmd'>chart.cmd</a>
 
 
