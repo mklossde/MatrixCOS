@@ -16,7 +16,9 @@ It a christmas projet inspired by
 ![Display-Title](images/pageTitle.gif)		
 
 ##  Example animation gif frame
-![Display-Example](images/frame.gif)	
+![Display-Example](images/frame1.gif)
+![Display-Example](images/frame2.gif)		
+![Display-Example](images/example_image.gif)
 Display images as a pixel frame 
 
 ##  Example Home Assistant / Shelly / Mqtt
@@ -53,8 +55,6 @@ Display power values of a shelly EM (via MQTT)
  - <a href='https://github.com/mklossde/CmdOs/blob/main/doc/CmdOsCmds.md'>CmdOS Commands</a>
  
 
-##  Example disaply animated gif
-![Display-Example](images/example_image.gif)
 
 ## Setup
 	matrix 64 64 1 90 0 0,15,4,16,27,17,5,18,19,21,12,33,25,22
