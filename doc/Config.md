@@ -14,6 +14,10 @@ which based on <a href='https://github.com/adafruit/Adafruit-GFX-Library'>adafru
 
 I build 5 items with 13,98 Euro each :-)
 
+## 3Dprint 
+
+See <a href='../3d/rdprint.md>3D Print Modell</a>
+
 ## Installtion
 
 Easy was to install the bin via <a href='https://web.esphome.io/'>esp-web-tools</a>

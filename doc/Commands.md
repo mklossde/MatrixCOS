@@ -3,7 +3,8 @@
 
 - matrix sizeX sizeY chain brightness rotation pins - config hub75 dislpay/connection
 	e.g. matrix 64 64 1 90 0 0,15,4,16,27,17,5,18,19,21,12,33,25,22
-- buffer dmaBuffer displayBuffer - (0=off/1=on) enable dmsBuffer or displayBuffer 
+- matrix2 dmaBuffer displayBuffer latBlanking clkphase 
+	(0=off/1=on) enable dmsBuffer or displayBuffer 
 
  ## draw control
 - drawOff => switch display off by clear and stop all

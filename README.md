@@ -14,26 +14,14 @@ This is a ESP32 based Applciation to display information via HUB75 Matrix displa
 It a christmas projet inspired by 
 	<a href='https://github.com/JPlenert/eely-hodi'>eely-HoDi Make Articel</a> 
 
-![Display-Title](images/pageTitle.gif)	
+![Display-Title](images/pageTitle.gif)		
 
-## Feature 
- - <a href='doc/Config.md'>Hardware install and config</a>
- - <a href='doc/Commands.md'>matrix commands</a>
- - <a href='doc/Web.md'>web control</a> 
- - <a href='doc/Mqtt.md'>mqtt control</a>
- - <a href='doc/Rest.md'>rest control</a>
- - <a href='doc/Timer.md'>autostart and timer</a> 
- - <a href='doc/Multi.md'>multi display</a> 
- - <a href='https://github.com/mklossde/CmdOs/blob/main/doc/CmdOsCmds.md'>CmdOS Commands</a>
-	
-## Command Examples 
-<a href='example/examples.md'>command Examples</a>
-
-##  Example show values 
-![Display-Example](images/pageEsp.gif)	
-Exmaple of displays esp values on the matrix display
+##  Example animation gif frame
+![Display-Example](images/frame.gif)	
+Display images as a pixel frame 
 
 ##  Example Home Assistant / Shelly / Mqtt
+![Display-Example](images/pageEsp.gif)	
 ![Display-Example](images/shellyEM.gif)	
 Display power values of a shelly EM (via MQTT) 
 
@@ -52,6 +40,19 @@ Display power values of a shelly EM (via MQTT)
 	  wait 2000
 	  goto #loop
 
+## Command Examples 
+<a href='example/examples.md'>command Examples</a>
+
+## Feature 
+ - <a href='doc/Config.md'>Hardware install and config</a>
+ - <a href='doc/Commands.md'>matrix commands</a>
+ - <a href='doc/Web.md'>web control</a> 
+ - <a href='doc/Mqtt.md'>mqtt control</a>
+ - <a href='doc/Rest.md'>rest control</a>
+ - <a href='doc/Timer.md'>autostart and timer</a> 
+ - <a href='doc/Multi.md'>multi display</a> 
+ - <a href='https://github.com/mklossde/CmdOs/blob/main/doc/CmdOsCmds.md'>CmdOS Commands</a>
+ 
 
 ##  Example disaply animated gif
 ![Display-Example](images/example_image.gif)
