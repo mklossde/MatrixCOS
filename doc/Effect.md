@@ -3,6 +3,8 @@
 
 With displayBfffer enabled, here are some effects
 
+![Display-Example](../images/pageTime.gif)	
+
 - effectType = define a effect
 - effectStep = number of steps (effect stops after number of steps)
 - effectSpeed = imte in ms between two steps

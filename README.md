@@ -41,6 +41,11 @@ Display power values of a shelly EM (via MQTT)
 	  wait 2000
 	  goto #loop
 
+## Effects
+
+![Display-Example](images/pageTime.gif)	
+<a href='doc/Effect.md'>Effects</a>
+
 ## Command Examples 
 <a href='example/examples.md'>command Examples</a>
 
