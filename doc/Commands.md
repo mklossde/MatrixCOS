@@ -3,7 +3,7 @@
 
 - matrix sizeX sizeY chain brightness rotation pins - config hub75 dislpay/connection
 	e.g. matrix 64 64 1 90 0 0,15,4,16,27,17,5,18,19,21,12,33,25,22
-- matrix2 dmaBuffer displayBuffer latBlanking clkphase 
+- matrix2 dmaBuffer displayBuffer latBlanking clkphaseix2" 
 	(0=off/1=on) enable dmsBuffer or displayBuffer 
 
  ## draw control
@@ -51,6 +51,7 @@
 - pageTest - draw test page - simple dislpay test
 - pageTitle - draw title page - matrixCOS title 
 - pageEsp - draw esp page - show esp informations 
+- pageTime - who date and time with effect
 
 ## image 
 - drawIcon x y w h c file - draw icon (bm1) at x,y with w,h of color 

@@ -154,7 +154,7 @@ void drawFile(char *name,char *suffix,int x,int y,boolean direct) {
     return ;
 
   }else if(endsWith(suffix,".gif")) {
-    drawShowTitle=false;  
+    drawClear();
     _playGif=false;
 
     x_offset=x; y_offset=y;
@@ -218,6 +218,7 @@ void drawFileClose() {
 
 /* stop all prg /drawings */
 void drawStop() {
+  matrixPage=0;
   drawFileClose();
   prgStop();
 }
@@ -266,23 +267,30 @@ int _effectSpeed=100;
 int _effectStep=0;
 int _effectIndex=0;
 
+int _effectA=1;
+int _effectB=0;
+
 unsigned long *effectTimer = new unsigned long(0);
 
-byte _effectA=1;
-byte _effectB=0;
-byte _effectType=0;
 
-/* shift image [counter timePerCount plusX plusY] (e.g. effect 1 64 10 1 0 )*/
+/* shift image [counter timePerCount plusX plusY] 
+   (e.g. effect 1 64 10 -1 0 ) 
+   plus>5,<-5 => matrix/random shift e.g. effect 1 64 100 0 -5 
+*/
 void effectShift() {
     for(int x=0;x<eeMatrix.panelX;x++) {
       for(int y=0;y<eeMatrix.panelY;y++) {
         GFXcanvas16 *canvas=(GFXcanvas16*)display;
         int px=x, py=y; uint16_t color=0;
-        if(_effectA<0) { px=eeMatrix.panelX-x-1; }
-        if(_effectB<0) { px=eeMatrix.panelY-y-1; }
-        int posX=px+_effectA; int posY=py+_effectB;
-//Serial.print(" posX:");Serial.print(posX)+Serial.print(" a:");Serial.print(_effectA);        
-//Serial.print(" posY:");Serial.print(posY)+Serial.print(" b:");Serial.print(_effectB);Serial.println("");        
+        if(_effectA<0) { px=eeMatrix.panelX-x-1; }        
+        if(_effectB<0) { py=eeMatrix.panelY-y-1; }
+        int posX, posY;
+        if(_effectA>=5) { posX=px+random(1,_effectA); }        
+        else if(_effectA<=-5) { posX=px-random(1,(_effectA*-1)); }    
+        else { posX=px+_effectA; }
+        if(_effectB>=5) { posY=py+random(1,_effectB); } 
+        else if(_effectB<=-5) { posY=py-random(1,(_effectB*-1)); } 
+        else { posY=py+_effectB; }
         if(posX>=0 && posX<eeMatrix.panelX && posY>=0 && posY<eeMatrix.panelY) { color= canvas->getPixel(posX,posY); }
         canvas->drawPixel(px,py,color);
       }
@@ -290,24 +298,27 @@ void effectShift() {
     draw();
 }
 
-/* dim up/down display (e.g. effect 2 10 100) */
+/* dim up/down display (e.g. effect 2 10 100) 
 void effectDim() {
   if(_effectIndex==0) { _effectA=eeMatrix.brightness/(_effectStep-1); }
   int v=eeMatrix.brightness-(_effectA*_effectIndex);
   matrixBrightness(v);
   if(_effectIndex==_effectStep-1) { matrixBrightness(eeMatrix.brightness); }
 } 
+*/
 
 void effectLoop() {
-  if(eeMatrix.displayBuffer && _effectIndex<_effectStep && isTimer(effectTimer, _effectSpeed)) { 
+  if(eeMatrix.displayBuffer && _effectType!=0 && _effectIndex<_effectStep && isTimer(effectTimer, _effectSpeed)) { 
     if(_effectType==1) { effectShift();  }
-    else if(_effectType==2) { effectDim();  }
+//    else if(_effectType==2) { effectDim();  }
     _effectIndex++;
+    if(_effectIndex==_effectStep) { logPrintln(LOG_DEBUG, "effect end"); }
   }
 }
 
 /* start effect */
 void effectStart(byte effectType,int effectStep,int effectSpeed,int effectA,int effectB) {
+  sprintf(buffer,"effect start %d %d %d %d %d",effectType,effectStep,effectSpeed,effectA,effectB); logPrintln(LOG_DEBUG,buffer);
   _effectType=effectType;
   _effectStep=effectStep; _effectSpeed=effectSpeed;
   _effectA=effectA; _effectB=effectB;
@@ -376,9 +387,10 @@ void matrixWebSetup(AsyncWebServerRequest *request) {
 void matrixWeb(AsyncWebServerRequest *request) {
   String message;
   if (request->hasParam("drawClear")) {  drawClose();
-  }else if (request->hasParam("drawTitle")) {  pageTitle();
-  }else if (request->hasParam("drawEsp")) {  pageEsp();
-  }else if (request->hasParam("drawTest")) {  pageTest();
+  }else if (request->hasParam("pageTitle")) {  *matrixPageTime=0; matrixPage=1;
+  }else if (request->hasParam("pageEsp")) {  *matrixPageTime=0; matrixPage=2; 
+  }else if (request->hasParam("pageTest")) {  *matrixPageTime=0; matrixPage=3;
+  }else if (request->hasParam("pageTime")) {  *matrixPageTime=0; matrixPage=4;
   }else if (request->hasParam("drawFile")) { 
     String name=webParam(request,"name");  
     char *file=(char*)name.c_str();
@@ -393,7 +405,7 @@ void matrixWeb(AsyncWebServerRequest *request) {
   String html = ""; html = pageHead(html, "MatrixHup");
   File root = FILESYSTEM.open(rootDir);
   File foundfile = root.openNextFile();
-  html+="[<a href=?drawTitle=1>Title</a>][<a href=?drawEsp=1>Esp</a>][<a href=?drawTest=1>Test</a>][<a href=?drawClear=1>OFF</a>]";
+  html+="[<a href=?pageTitle=1>Title</a>][<a href=?pageEsp=1>Esp</a>][<a href=?pageTest=1>Test</a>][<a href=?pageTime=1>Time</a>][<a href=?drawClear=1>OFF</a>]";
   html+="<table><tr>";
   int cols=0;
   while (foundfile) { 
@@ -480,12 +492,14 @@ char* matrixCmd(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p
     // drawText x y c size text - draw text at x y with size 
     else if(strcmp(cmd, "drawText")==0) { drawText(toInt(p0),toInt(p1),toInt(p2),toInt(p3),p4); return EMPTY; }
 
-    // pageTest - draw test page - simple dislpay test
-    else if(strcmp(cmd, "pageTest")==0) { pageTest(); return EMPTY; }
     // pageTitle - draw title page - matrixCOS title
-    else if(strcmp(cmd, "pageTitle")==0) { pageTitle(); return EMPTY; }
+    else if(strcmp(cmd, "pageTitle")==0) { *matrixPageTime=0; matrixPage=1;  return EMPTY; }
     // pageEsp - draw esp page - show esp informations 
-    else if(strcmp(cmd, "pageEsp")==0) { pageEsp(); return EMPTY; }
+    else if(strcmp(cmd, "pageEsp")==0) { *matrixPageTime=0; matrixPage=2;  return EMPTY; }
+    // pageTest - draw test page - simple dislpay test
+    else if(strcmp(cmd, "pageTest")==0) { *matrixPageTime=0; matrixPage=3; return EMPTY; }
+    // pageTime - draw time page - 
+    else if(strcmp(cmd, "pageTime")==0) { *matrixPageTime=0; matrixPage=4; return EMPTY; }
 
     // drawFile file type x y - draw a gif/icon at x,y
     else if(strcmp(cmd, "drawFile")==0) { drawFile(p0,p0,toInt(p1),toInt(p2),false); return EMPTY; }    

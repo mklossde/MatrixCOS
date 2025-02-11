@@ -9,10 +9,14 @@ Adafruit_GFX *display=NULL;
 
 boolean _matrixSetup=false; // matrix setup ok
 
+
+byte _effectType=0;
+
 //-----------------------------------------------------------
 // Panel Connetons (GPIO)
 
-boolean drawShowTitle=false; 
+byte matrixPage=0; // 0=off,1=title
+unsigned long *matrixPageTime = new unsigned long(0);
 
 // Matrix store structur
 typedef struct {
@@ -51,14 +55,19 @@ void draw() {
   }
 }
 
-
-/* clear display */
-void drawClear() {   
-//  draw();
-  if(!_matrixSetup) { return ; }
-  if(eeMatrix.displayBuffer) { display->fillRect(0,0,eeMatrix.panelX,eeMatrix.panelY,0); }
+/* clear from page */
+void pageClear() {
+  if(eeMatrix.displayBuffer) { display->fillRect(0,0,eeMatrix.panelX,eeMatrix.panelY,0); } 
   else { dma_display->clearScreen(); }
-  drawShowTitle=false;
+  _effectType=0; // effect off
+}
+
+
+/* clear display , stop play page */
+void drawClear() {   
+  if(!_matrixSetup) { return ; }
+  if(eeMatrix.displayBuffer) { display->fillRect(0,0,eeMatrix.panelX,eeMatrix.panelY,0); } else { dma_display->clearScreen(); }
+  matrixPage=0;
 } 
 
 /* color color */
@@ -315,7 +324,7 @@ int col_green;
 int col_blue;
 
 void pageTitle() {
-  drawClear();
+  pageClear();
 
   // WIFI  
   drawArc(30,50 ,3, 90, 60, 30, 30, 3, col_red);
@@ -349,13 +358,13 @@ void pageTitle() {
   if(is(appIP)) {  
     drawText(1,10,col_red,1,(char*)appIP.c_str());   
   }
-  drawShowTitle=true;
+
   draw();
   sprintf(buffer, "drawTitle red:%d green:%d blue:%d  white:%d",col_red,col_green,col_blue,col_white); logPrintln(LOG_DEBUG,buffer);
 }
 
 void pageTest() {
-
+  pageClear();
   for (int i=32; i >=0; i--){ 
     int w=panelX-(i*2);
     int h=panelY-(i*2);
@@ -367,7 +376,8 @@ void pageTest() {
 
 /* show esp page */
 void pageEsp() {
-  drawClear();
+  pageClear();
+
   uint32_t chipid=espChipId(); // or use WiFi.macAddress() ?
   snprintf(buffer,20, "%08X",chipid);
   drawText(15,1,col_white,1,buffer);
@@ -401,6 +411,18 @@ void pageEsp() {
   }    
   draw();
 }
+
+void pageTime() {
+  pageClear();
+  drawTime(10,5,col_red);
+  drawDate(2,20,col_red);
+  drawLine(5,15,60,15,col_white);
+  draw();
+  delay(250);
+  effectStart(1,64,50,0,-5);
+}  
+
+//-----------------------------------------------------------
 
 char* matrixInfo() {
   sprintf(buffer, "Matrix enabled:%d ok:%d panelX:%d panelY:%d panelChain:%d brightness:%d rotation:%d pins:%s dmaBuffer:%d disBuffer:%d latBlanking:%d clkphase:%d",
@@ -501,26 +523,26 @@ void matrixSetup() {
   dma_display->clearScreen();
 
   pageTest();  
-  pageTitle();
+  pageTitle(); matrixPage=1;
   
 
 }
 
-
-
-unsigned long *matrixStatusTime = new unsigned long(0);
-
 void matrixStatus() {
-  if(eeMode<=EE_MODE_AP) { drawLine(0,panelY,panelX,panelY,toColor444(0,0,15));} // blue => AP Mode
-  else if(eeMode!=EE_MODE_OK) { drawLine(0,panelY,panelX,panelY,toColor444(15,0,0));} // red => Mode wrong  
+  if(eeMode<=EE_MODE_AP) { drawLine(0,panelY,panelX,panelY,col_blue);} // blue => AP Mode
+  else if(eeMode!=EE_MODE_OK) { drawLine(0,panelY,panelX,panelY,col_red);} // red => Mode wrong  
 }
 
 void matrixLoop() {
   if(!matrixEnable && !_matrixSetup) { return ; }
-  if(drawShowTitle) {
-    if(isTimer(matrixStatusTime, 1000)) { 
-      pageTitle(); } // draw title again 
+  if(matrixPage>0) {
+    if(isTimer(matrixPageTime, 1000)) { 
+      if(matrixPage==1) { pageTitle(); } // draw title again 
+      else if(matrixPage==2) { pageEsp(); } 
+      else if(matrixPage==3) { pageTest(); } 
+      else if(matrixPage==4) { pageTime(); } 
+    }
   }else {
-    if(isTimer(matrixStatusTime, 1000)) { matrixStatus(); } // draw staus
+    if(isTimer(matrixPageTime, 1000)) { matrixStatus(); } // draw staus
   }  
 }
