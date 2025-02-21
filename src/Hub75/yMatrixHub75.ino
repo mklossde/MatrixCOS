@@ -419,8 +419,20 @@ void pageTime() {
   drawLine(5,15,60,15,col_white);
   draw();
   delay(250);
-  effectStart(1,64,50,0,-5);
+  effectStart(1,64,20,0,-5);
 }  
+
+void pageGif() {
+  pageClear();
+  int f=random(0,fsDirSize(".gif"));
+  char* name=fsFile(".gif",f,0);
+  drawFile(name,name,0,0,false);
+  delay(250);
+  drawFileClose();
+  int rx=random(-1,2)*5;
+  int ry=random(-1,2)*5;
+  effectStart(1,64,20,rx,ry);
+}
 
 //-----------------------------------------------------------
 
@@ -541,6 +553,7 @@ void matrixLoop() {
       else if(matrixPage==2) { pageEsp(); } 
       else if(matrixPage==3) { pageTest(); } 
       else if(matrixPage==4) { pageTime(); } 
+      else if(matrixPage==5) { pageGif(); } 
     }
   }else {
     if(isTimer(matrixPageTime, 1000)) { matrixStatus(); } // draw staus

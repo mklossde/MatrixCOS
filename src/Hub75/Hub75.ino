@@ -54,8 +54,8 @@ AsyncWebServer server(_webPort);
 //--------------------------------------------------------------
 
 
-char* appCmd(char *cmd, char *p0, char *p1,char *p2,char *p3,char *p4,char *p5,char *p6,char *p7,char *p8,char *p9) {
-    return matrixCmd(cmd,p0,p1,p2,p3,p4,p5,p6,p7,p8,p9); 
+char* appCmd(char *cmd, char **param) {
+    return matrixCmd(cmd,param); 
 }
 
 //--------------------------------------------------------------
