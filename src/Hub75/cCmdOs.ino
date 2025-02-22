@@ -3014,7 +3014,8 @@ boolean pIsCalc(char *param) {
 //Serial.print(" pIsCalc:");Serial.println(*param);        
   if(*param=='<' || *param=='>' || *param=='=' || *param=='!') { return true; }
   else if(*param=='&' || *param=='|' ) { return true; }
-  else if(*param=='+' || *param=='-' || *param=='*' || *param=='/') { return true; }
+  else if((*param=='+' || *param=='-') && (*(param+1)<'0' || *(param+1)>'9')) { return true; } // +- without number (e.g. -1) 
+  else if(*param=='*' || *param=='/') { return true; }
   else { return false; }
 }
 
@@ -3133,14 +3134,16 @@ int xCalc(int ai,char *calc,char **param) {
   else if(equals(calc,">>")) { ret=ai >> bi; }
   else if(equals(calc,"<<")) { ret=ai << bi; }
 
-  else { cmdError("ERROR unkown calc"); ret=0; }
+//  else { cmdError("ERROR unkown calc"); ret=0; }
+  else { sprintf(buffer,"ERROR unkown calc '%s'",calc); cmdError(buffer); ret=0; }
+  
 //  sprintf(buffer,"calc a:%s calc:%s b:%s => %d",ai,calc,bi,ret); logPrintln(LOG_DEBUG,buffer);  
   return ret;
 }
 
 int calcParam(char **param) { return calcParam(cmdParam(param),param); }
 int calcParam(char *val,char **param) {
-  int a=toInt(val);
+  int a=toInt(val);  
   cmdParamSkip(param); // skip spaces
   while(pIsCalc(*param))  {    
     char *calc=cmdParam(param);       
@@ -3171,14 +3174,20 @@ char* cmdParam(char **pp) {
       (*pp)++; // skip first $
       p1 = strtok_r(NULL, " ",pp); 
       p1=attrGet(p1);
-
-    }else {
-      p1 = strtok_r(NULL, " ",pp);        
-      if(!is(p1) || pIsNumber(p1) || pIsCalc(p1)) { }
-      else { p1=cmdExec(p1, pp); }
+    }else if(pIsNumber(*pp) || pIsCalc(*pp)) {
+        p1 = strtok_r(NULL, " ",pp);  
+    }else { 
+      p1 = strtok_r(NULL, " ",pp);            
+      if(is(p1)) { p1=cmdExec(p1, pp); }
     }
+
+//Serial.print("  cdmParam:");Serial.println(p1);
     if(p1==NULL) { return EMPTY; } 
-    else if(pIsCalc(*pp)) { // next param calc 
+    cmdParamSkip(pp); // skip spaces
+//Serial.print("  next:");Serial.println(*pp);    
+    if(pIsCalc(*pp)) { // next param calc #
+//Serial.print("  next calc");Serial.println("");    
+      sprintf(buffer,"  calc after %s",p1); logPrintln(LOG_DEBUG,buffer);
       int ret=calcParam(p1,pp);
       sprintf(paramBuffer,"%d",ret);
       p1=paramBuffer;

@@ -6,7 +6,7 @@
 #include <AnimatedGIF.h>
  
 const char *prgTitle = "MatrixCOS";
-const char *prgVersion = "V1.0.0";
+const char *prgVersion = "V1.1.0";
 
 const char* user_admin = "admin"; // default user
 char user_pas[]="";   // default espPas
@@ -33,7 +33,7 @@ boolean bootSafe=true;    // enable/disbale boot safe
 #define webSerialEnable false // enable/disbale web serial
 #define mqttEnable true      // enable/disbale mqtt
 
-#define otaEnable true        // enabled/disbale ota update 
+#define otaEnable false        // enabled/disbale ota update 
 #define updateEnable false     // enabled/disbale update firmware via web 
 
 #define ledEnable false       // enable/disbale serial

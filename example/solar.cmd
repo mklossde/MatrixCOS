@@ -10,15 +10,15 @@ $ps = 50
 #loop
 $pv = $pv/energy
 
-if $pv < -1 2
+if $pv < -1 {
   $pc = 65120
   $pi = 2016
-
-if $pv >= -1 3
+}
+if $pv >= -1 {
   $pc = 21162
   $pi = 63488
   $ps = 50
-
+}
 drawClear
 
 # sun
@@ -40,14 +40,13 @@ drawLine 38 40 50 28 $pt
 drawText 5 53 $pi 1 $pv
 
 #shine
-if $ps < 45
-drawArc 5 5 6 15 15 $ps $ps 1 65120
+if $ps < 45 drawArc 5 5 6 15 15 $ps $ps 1 65120
 
 draw
 
   wait 100
   $ps = $ps + 5
-  if $ps <= 50 #loop
+  if $ps <= 50 goto #loop
   $ps = 15
 
 wait 1000

@@ -1,14 +1,14 @@
 # counter 9
 $c = 9
-$x = 0; $y = 64
+$x = 0
+$y = 64
+$white = drawColor 15 15 15
+$red = drawColor 15 0 0
 
-
-#loop
-  drawClear
-  drawColor 15 15 15
-  drawRect $x $x $y $y
-  drawColor 0 0 15
-  drawText 20 15 -1 5 $c
+{
+  drawClear  
+  drawRect $x $x $y $y $white
+  drawText 20 15 $red 5 $c
   draw
   log counter $c
   wait 1000
@@ -16,14 +16,13 @@ $x = 0; $y = 64
   $x = $x + 3
   $y = $y - 6
   $c = $c - 1 
-  if $c >= 0 #loop
+} until $c < 0 
 
 
 $c = 3
-#light
+{
   drawClear
-  drawColor 15 15 15
-  fillRect 0 0 64 64 
+  fillRect 0 0 64 64 $white
   draw
   wait 10
 
@@ -32,14 +31,13 @@ $c = 3
   wait 100
 
   $c = $c - 1
-  if $c >= 0 #light
+} until $c < 0
 
 
 #happy
   drawClear
-  drawColor 15 0 0
-  drawText 20 10 -1 1 "Happy"
-  drawText 10 20 -1 1 "Birthday"
+  drawText 20 10 $red 1 "Happy"
+  drawText 10 20 $red 1 "Birthday"
   draw
 
 log "end"
