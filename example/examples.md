@@ -15,8 +15,13 @@ draw alarm sign  <a href='alarm.cmd'>alarm.cmd</a>
 draw toilet sign  <a href='signToilet.cmd'>signToilet.cmd</a>
 
 ## Fire and Exit
-![example](../images/FireAndExit.gif) ![example](../images/FireAndExit.gif)
+![example](../images/FireAndExit.gif)
 draw fire and exit sign  <a href='fireAndExit.cmd'>fireAndExit.cmd</a>
+
+## Digital wash information
+![example](../images/wash2.gif) ![example](../images/wash.gif)
+washer example  <a href='wash.cmd'>wash.cmd</a>
+(e.g. use by read $m from tasmota or shelly plug and show wash if acutal power > 10 and done if actual power < 5)
 
 ## solor
 ![example](../images/example_pv2.gif)
