@@ -23,6 +23,10 @@ draw fire and exit sign  <a href='fireAndExit.cmd'>fireAndExit.cmd</a>
 washer example  <a href='wash.cmd'>wash.cmd</a>
 (e.g. use by read $m from tasmota or shelly plug and show wash if acutal power > 10 and done if actual power < 5)
 
+## Room
+![example](../images/room.gif)
+Next please in room X  <a href='room.cmd'>room.cmd</a>
+
 ## solor
 ![example](../images/example_pv2.gif)
 receive information via MQTT and show as solar energy

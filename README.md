@@ -39,6 +39,10 @@ draw fire and exit sign  <a href='example/fireAndExit.cmd'>fireAndExit.cmd</a>
 washer example  <a href='example/wash.cmd'>wash.cmd</a>
 (e.g. use by read $m from tasmota or shelly plug and show wash if acutal power > 10 and done if actual power < 5)
 
+## Room
+![example](images/room.gif)
+Next please in room X  <a href='example/room.cmd'>room.cmd</a>
+
 ##  Example Home Assistant / Shelly / Mqtt
 ![Display-Example](images/pageEsp.gif)	
 ![Display-Example](images/shellyEM.gif)	
