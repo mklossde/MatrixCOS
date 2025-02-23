@@ -5,14 +5,18 @@
 ![example](../images/example_clock.gif)
 Draw a count-down - <a href='TimeDateClock.cmd'>TimeDateClock.cmd</a>
 
-## alarm
+## alarm sign
 ![example](../images/alarm1.gif) ![example](../images/alarm2.gif) ![example](../images/alarm3.gif)
-draw alarm sign  <a href='alarm.cmd'>chart.cmd</a>
+draw alarm sign  <a href='alarm.cmd'>alarm.cmd</a>
 
-## toilet
+## toilet sign
 ![example](../images/toilet1.gif) ![example](../images/toilet2.gif) ![example](../images/toilet3.gif)
 ![example](../images/toilet11.gif) ![example](../images/toilet22.gif)
 draw toilet sign  <a href='signToilet.cmd'>signToilet.cmd</a>
+
+## Fire and Exit
+![example](../images/FireAndExit.gif) ![example](../images/FireAndExit.gif)
+draw fire and exit sign  <a href='fireAndExit.cmd'>fireAndExit.cmd</a>
 
 ## solor
 ![example](../images/example_pv2.gif)

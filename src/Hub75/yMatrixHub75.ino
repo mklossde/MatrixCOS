@@ -94,6 +94,12 @@ void drawRect(int x,int y, int w,int h,int color) {if(!_matrixSetup) { return ; 
 /* draw fill rec */
 void fillRect(int x,int y, int w,int h,int color) { if(!_matrixSetup) { return ; }if(color==-1) { color=_color; } display->fillRect(x,y,w,h, color); }  
 
+void drawLine(int x,int y, int w,int h, int xw,int yw, int color) { 
+  if(!_matrixSetup) { return ; } if(color==-1) { color=_color; } 
+  for(int i=0;i<xw;i++) {  for(int t=0;t<yw;t++) { display->drawLine(x+i,y+t,w+i,h+t, color); }}
+}
+ 
+
 // drawTriangle x y x2 y2 x3 y3 c - draw a trinagle (from x,y to x2,y2 to x3,y3 to x,y)
 void drawTriangle(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color) {
   if(!_matrixSetup) { return ; }

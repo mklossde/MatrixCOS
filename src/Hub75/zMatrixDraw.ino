@@ -462,6 +462,8 @@ char* matrixCmd(char *cmd, char **param) {
     else if(strcmp(cmd, "drawPixel")==0) { drawPixel(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param))); return EMPTY; }
     // drawLine x y x2 y2 c - draw a line (from x,y to x2,y2)
     else if(strcmp(cmd, "drawLine")==0) { drawLine(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param))); return EMPTY; }
+    // draw line with thick 
+    else if(strcmp(cmd, "drawWLine")==0) { drawLine(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param))); return EMPTY; }
     // rawRect x y w h c - draw rect (rect from x,y to x+w,y+h)
     else if(strcmp(cmd, "drawRect")==0) { drawRect(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param))); return EMPTY; }
     // fillRect x y w h c - draw a filled rect

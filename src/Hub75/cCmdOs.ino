@@ -2274,7 +2274,8 @@ void webFileManagerEd(AsyncWebServerRequest *request, String name) {
   File ff = SPIFFS.open(name, FILE_READ);
   if (ff) { html += ff.readString(); }
   ff.close();
-  html += "</textarea><br><input type='submit' name='doSave' value='ok'></form>";
+  html += "</textarea><br><input type='submit' name='doSave' value='save'>";
+  html += "<input type='submit' name='doSaveAndRun' value='save and run'></form>";
   html = pageEnd(html,EMPTYSTRING);
   request->send(200, "text/html", html);
 }
@@ -2318,8 +2319,9 @@ void webFileManager(AsyncWebServerRequest *request) {
   else if (request->hasParam("rename")) { webFileManagerRename(request, webParam(request,"name")); return; }
   else if (request->hasParam("doRename")) { fsRename(webParam(request,"name"), webParam(request,"newname")); }
   else if (request->hasParam("ed")) { webFileManagerEd(request, webParam(request,"name")); return; }
-  else if (request->hasParam("doSave")) { 
+  else if (request->hasParam("doSave") || request->hasParam("doSaveAndRun")) { 
     webFileManagerSave(request, webParam(request,"name"), webParam(request,"value")); 
+    if(request->hasParam("doSaveAndRun")) { cmdFile((char*)webParam(request,"name").c_str()); }
     webFileManagerEd(request, webParam(request,"name")); return;
   }
   else if (request->hasParam("doUploadUrl")) { message=fsDownload(webParam(request,"url"), webParam(request,"name"));  }
