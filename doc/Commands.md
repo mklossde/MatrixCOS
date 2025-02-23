@@ -1,6 +1,8 @@
 
 # MatrixCOS - Commands
 
+See <a href='https://github.com/mklossde/CmdOs/blob/main/doc/CmdOsCmds.md'>CmdOS cmds</a> for all commands
+
 - matrix sizeX sizeY chain brightness rotation pins - config hub75 dislpay/connection
 	e.g. matrix 64 64 1 90 0 0,15,4,16,27,17,5,18,19,21,12,33,25,22
 - matrix2 dmaBuffer displayBuffer latBlanking clkphaseix2" 
@@ -27,8 +29,10 @@
 - fillRect x y w h c - draw a filled rect
 - drawTriangle x y x2 y2 x3 y3 c - draw a trinagle (from x,y to x2,y2 to x3,y3 to x,y)
 - fillTriangle x y x2 y2 x3 y3 c -  draw a filled triangle
+- drawRoundRect x y w h radius color - draw round rect (rect from x,y to x+w,y+h) with radius round
+- fillRoundRect x y w h radius color - draw filled round rect (rect from x,y to x+w,y+h) with radius round
 
-- drawText x y c size text - draw text at x y with size 
+- drawText x y size text color - draw text at x y with size 
 
 - drawCircle x y w c - draw circle at x y with radius w 
 - fillCircle x y w c - draw filled circle at x y with radius w 

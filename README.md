@@ -17,8 +17,19 @@ It a christmas projet inspired by
 
 ##  Example animation gif frame
 ![Display-Example](images/frame1.gif)
-![Display-Example](images/frame2.gif)		
+![Display-Example](images/frame2.gif)
+![Display-Example](images/images.gif)		
 Display images as a pixel frame 
+
+## Example alarm sign
+![example](images/alarm1.gif) ![example](images/alarm2.gif) ![example](images/alarm3.gif)
+draw alarm sign  <a href='alarm.cmd'>chart.cmd</a>
+
+## Example toilet sign
+![example](images/toilet1.gif) ![example](images/toilet2.gif) ![example](images/toilet3.gif)
+![example](images/toilet11.gif) ![example](images/toilet22.gif)
+draw toilet sign  <a href='signToilet.cmd'>signToilet.cmd</a>
+
 
 ##  Example Home Assistant / Shelly / Mqtt
 ![Display-Example](images/pageEsp.gif)	
@@ -32,7 +43,7 @@ Display power values of a shelly EM (via MQTT)
 	#loop
 	  drawClear
 	  drawColor 15 15 15
-	  drawText 5 1 -1 1 "Shelly EM"
+	  drawText 5 1 1 "Shelly EM"
 	  drawColor 15 0 0 
 	  valueFull 1 12 "Power0" $shellies/shellyem3/emeter/0/power 1000 888 444
 	  valueFull 1 30 "Power1" $shellies/shellyem3/emeter/1/power 1000 888 444

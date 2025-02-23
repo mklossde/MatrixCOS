@@ -252,13 +252,13 @@ void drawLoop() {
 /* draw net-time at x,y with color */
 //TODO do not work
 void drawTime(int x,int y,int color) {  
-  drawText(x,y,color,1,getTime());
+  drawText(x,y,1,getTime(),color);
 }
 
 /* draw net-date at x,y with color */
 //TODO do not work
 void drawDate(int x,int y,int color) {  
-  drawText(x,y,color,1,getDate());
+  drawText(x,y,1,getDate(),color);
 }
         
 //------------------------------------------------------------
@@ -471,6 +471,13 @@ char* matrixCmd(char *cmd, char **param) {
     // fillTriangle x y x2 y2 x3 y3 c -  draw a filled triangle
     else if(strcmp(cmd, "fillTriangle")==0) { fillTriangle(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param))); return EMPTY; }
 
+   // rawRect x y w h c - draw rect (rect from x,y to x+w,y+h)
+    else if(strcmp(cmd, "drawRoundRect")==0) { drawRoundRect(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param))); return EMPTY; }
+    // fillRect x y w h c - draw a filled rect
+    else if(strcmp(cmd, "fillRoundRect")==0) { fillRoundRect(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param))); return EMPTY; }
+
+
+
     // drawCircle x y w c - draw circle at x y with radius w 
     else if(strcmp(cmd, "drawCircle")==0) { drawCircle(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param))); return EMPTY; }
     // fillCircle x y w c - draw filled circle at x y with radius w 
@@ -492,7 +499,7 @@ char* matrixCmd(char *cmd, char **param) {
 
 
     // drawText x y c size text - draw text at x y with size 
-    else if(strcmp(cmd, "drawText")==0) { drawText(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),cmdParam(param)); return EMPTY; }
+    else if(strcmp(cmd, "drawText")==0) { drawText(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),cmdParam(param),toInt(cmdParam(param))); return EMPTY; }
 
     else if(strcmp(cmd, "pageOff")==0) { *matrixPageTime=2; matrixPage=0;  return EMPTY; }
     // pageTitle - draw title page - matrixCOS title

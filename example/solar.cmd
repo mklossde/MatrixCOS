@@ -37,7 +37,7 @@ drawRect 51 50 6 6 $pt
 drawLine 38 40 50 28 $pt
 
 #text
-drawText 5 53 $pi 1 $pv
+drawText 5 53 1 $pv $pi 
 
 #shine
 if $ps < 45 drawArc 5 5 6 15 15 $ps $ps 1 65120

@@ -5,7 +5,7 @@ mqttAttr shellies/shellyem3/emeter/2/power 1
 #loop
   drawClear
   drawColor 15 15 15
-  drawText 5 1 -1 1 "Shelly EM"
+  drawText 5 1 1 "Shelly EM"
   drawColor 15 0 0 
 
   valueFull 1 12 "Power0" $shellies/shellyem3/emeter/0/power 1000 888 444

@@ -25,7 +25,7 @@ boolean wifiEnable=true;  // enable/disbale wifi
 boolean ntpEnable=true; // enable time server
 boolean webEnable=true;    // enable/disbale http server
 boolean mdnsEnable=true;   // enable/disable mDNS detection 
-boolean bootSafe=true;    // enable/disbale boot safe
+boolean bootSafe=false;    // enable/disbale boot safe
 
 #define enableFs true         // enable fs / SPIFFS
 

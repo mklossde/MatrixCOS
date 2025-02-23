@@ -5,6 +5,15 @@
 ![example](../images/example_clock.gif)
 Draw a count-down - <a href='TimeDateClock.cmd'>TimeDateClock.cmd</a>
 
+## alarm
+![example](../images/alarm1.gif) ![example](../images/alarm2.gif) ![example](../images/alarm3.gif)
+draw alarm sign  <a href='alarm.cmd'>chart.cmd</a>
+
+## toilet
+![example](../images/toilet1.gif) ![example](../images/toilet2.gif) ![example](../images/toilet3.gif)
+![example](../images/toilet11.gif) ![example](../images/toilet22.gif)
+draw toilet sign  <a href='signToilet.cmd'>signToilet.cmd</a>
+
 ## solor
 ![example](../images/example_pv2.gif)
 receive information via MQTT and show as solar energy

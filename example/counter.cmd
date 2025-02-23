@@ -8,7 +8,7 @@ $red = drawColor 15 0 0
 {
   drawClear  
   drawRect $x $x $y $y $white
-  drawText 20 15 $red 5 $c
+  drawText 20 15 5 $c $red
   draw
   log counter $c
   wait 1000
@@ -36,8 +36,8 @@ $c = 3
 
 #happy
   drawClear
-  drawText 20 10 $red 1 "Happy"
-  drawText 10 20 $red 1 "Birthday"
+  drawText 20 10 1 "Happy" $red
+  drawText 10 20 1 "Birthday" $red 
   draw
 
 log "end"

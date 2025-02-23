@@ -119,12 +119,12 @@ void drawRoundRect(uint16_t x0, uint16_t y0, uint16_t w, uint16_t h, uint16_t ra
   if(color==-1) { color=_color; } display->drawRoundRect(x0,y0,w,h,radius,color); }
 void fillRoundRect(uint16_t x0, uint16_t y0, uint16_t w, uint16_t h, uint16_t radius, uint16_t color) { 
   if(!_matrixSetup) { return ; }
-  if(color==-1) { color=_color; } display->drawRoundRect(x0,y0,w,h,radius,color);  }
+  if(color==-1) { color=_color; } display->fillRoundRect(x0,y0,w,h,radius,color);  }
 
 void drawChar(uint16_t x, uint16_t y, char c, uint16_t color, uint16_t bg, uint8_t size) { 
   if(!_matrixSetup) { return ; }
   if(color<0) { color=_color; } display->drawChar(x,y,c,color,bg,size); }
-void drawText(int x,int y, int color, int size, const char *str) {
+void drawText(int x,int y, int size, const char *str,int color) {
   if(!_matrixSetup) { return ; }
   if(color<0) { color=_color; }
   display->setTextSize(size);     // size 1 == 8 pixels high
@@ -289,8 +289,8 @@ void drawOn(int x,int y,int w,int p,boolean on,int col1,int col2) {
 
 /* draw value with name+value */
 void drawValue(int x,int y,char *text,int value,int max,int col1,int col2) {
-  drawText(x,y,_color,1,text);
-  drawText(x,y+8,col1,1,to(value));
+  drawText(x,y,1,text,_color);
+  drawText(x,y+8,1,to(value),col1);
   drawLine(x,y+16,x+63,y+16,_color);
 }
 
@@ -341,22 +341,22 @@ void pageTitle() {
   fillTriangle(30, 50, 64, 15, 64, 50, 0);
   fillCircle(30, 50, 3, col_red);
 
-  drawText(1,1,col_red,1,prgTitle);   
-  drawText(1,panelY-8,col_red,1,prgVersion);   
+  drawText(1,1,1,prgTitle,col_red);   
+  drawText(1,panelY-8,1,prgVersion,col_red);   
 
   drawFull(55,25,8,20,2,(int)ESP.getFreeHeap(),150000,col_red,col_white);
   //if(wifi_image1bit!=NULL && panelY>32) { drawIcon(0,20,0,0, col_red,wifi_image1bit,sizeof(wifi_image1bit));  }
 
   if(eeMode<=EE_MODE_AP ) {
     fillRect(panelX-13,panelY-9,panelX,panelY,col_green);
-    drawText(panelX-12,panelY-8,col_red,1,"AP");
+    drawText(panelX-12,panelY-8,1,"AP",col_red);
   }else if(eeMode!=EE_MODE_OK && eeMode!=EE_MODE_START) {
     fillRect(panelX-13,panelY-9,panelX,panelY,col_red);
-    sprintf(buffer, "%d", eeMode); drawText(panelX-12,panelY-8,col_red,1,buffer);
+    sprintf(buffer, "%d", eeMode); drawText(panelX-12,panelY-8,1,buffer,col_red);
   }
 
   if(is(appIP)) {  
-    drawText(1,10,col_red,1,(char*)appIP.c_str());   
+    drawText(1,10,1,(char*)appIP.c_str(),col_red);   
   }
 
   draw();
@@ -380,18 +380,18 @@ void pageEsp() {
 
   uint32_t chipid=espChipId(); // or use WiFi.macAddress() ?
   snprintf(buffer,20, "%08X",chipid);
-  drawText(15,1,col_white,1,buffer);
+  drawText(15,1,1,buffer,col_white);
   // Heap
-  drawText(1,10,col_red,1,"Heap");
+  drawText(1,10,1,"Heap",col_red);
   drawFull(40,10,20,8,2,(int)ESP.getFreeHeap(),150000,col_red,col_white);
   sprintf(buffer,"%d",ESP.getFreeHeap()); 
 //  drawText(45,10,col_red,1,buffer);
 // sketch
-  drawText(1,20,col_red,1,"Sketch");
+  drawText(1,20,1,"Sketch",col_red);
   drawFull(40,20,20,8,2,(int)ESP.getSketchSize(),(int)ESP.getFreeSketchSpace(),col_red,col_white);
   // bootType
-  drawText(1,30,col_red,1,"CmdOs");
-  drawText(40,30,col_white,1,bootType);
+  drawText(1,30,1,"CmdOs",col_red);
+  drawText(40,30,1,bootType,col_white);
 //  // mac
 //  uint8_t baseMac[6]; esp_read_mac(baseMac, ESP_MAC_WIFI_STA);
 //  sprintf(buffer,"%02x:%02x:%02x:%02x:%02x:%02x\n",baseMac[0], baseMac[1], baseMac[2],baseMac[3], baseMac[4], baseMac[5]);
