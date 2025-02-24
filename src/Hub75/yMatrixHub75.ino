@@ -430,15 +430,19 @@ void pageTime() {
 
 void pageGif() {
   pageClear();
-  int f=random(0,fsDirSize(".gif"));
+  int max=fsDirSize(".gif");
+  int f=random(0,max);
   char* name=fsFile(".gif",f,0);
-  drawFile(name,name,0,0,false);
+  sprintf(paramBuffer,"%s",name);
+  drawFile(paramBuffer,paramBuffer,0,0,false);
   delay(250);
   drawFileClose();
   int rx=random(-1,2)*5;
   int ry=random(-1,2)*5;
   effectStart(1,64,20,rx,ry);
+  delay(1300);
 }
+
 
 //-----------------------------------------------------------
 

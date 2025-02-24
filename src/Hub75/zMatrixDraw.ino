@@ -423,8 +423,8 @@ void matrixWeb(AsyncWebServerRequest *request) {
     
   }
   html+="</tr></table><hr>";
-  html = pageUpload(html, "Draw gif/bm1/cmd", "/drawUpload");
-  html += "<form method='GET'>Draw URL gif/bm1/cmd<input type='text' size='64' name='url'/><input type='submit' name='drawUrl' value='ok'/></form>";
+//  html = pageUpload(html, "Draw gif/bm1/cmd", "/drawUpload");
+//  html += "<form method='GET'>Draw URL gif/bm1/cmd<input type='text' size='64' name='url'/><input type='submit' name='drawUrl' value='ok'/></form>";
   root.close();
   foundfile.close();
 

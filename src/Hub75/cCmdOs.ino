@@ -6,7 +6,7 @@
 #include <sys/time.h>     // time
 
 /* cmdOS from openON.org develop by mk@almi.de */
-const char *cmdOS="V.0.2.0-snapshot";
+const char *cmdOS="V.0.2.0";
 char *APP_NAME_PREFIX="CmdOs";
 
 String appIP="";
@@ -916,6 +916,8 @@ void fsSetup() {
   void fsSetup() {}
   void fsFormat() {}
 #endif
+
+
 //-------------------------------------------------------------------------------------------------------------------
 // LED
 
@@ -1104,7 +1106,6 @@ void swLoop() {
 void swSetup() {}
 void swLoop() {}
 #endif
-
 
 /*
  * Wifi
@@ -1890,8 +1891,6 @@ void otaLoop() {}
 #endif
 
 
-
-
 #if mqttEnable
 
 // MQTT
@@ -2146,6 +2145,7 @@ void mqttLoop() {
   void publishTopic(char* topic,char *message) {} 
   void mqttAttr(char *topic,boolean on) {}
 #endif
+
 
 #include <Arduino.h>
 #ifdef ESP32
@@ -2699,6 +2699,7 @@ void webStart(boolean on) {
   webSetup();
 }
 
+
 // Serial Command Line
 
 unsigned long *cmdTime = new unsigned long(0);
@@ -3069,12 +3070,8 @@ char* attrCalc(char *a,char *b,char *c) {
     return VALUE or attrInfo (if KEY missing) 
 */
 char* cmdSet(char *key,char **param) {
-//  int a=calcParam(param); // return p0p1p2
-//  sprintf(buffer,"%d",a);
   char* ret=cmdParam(param);
-  if(key!=NULL) { 
-    attrSet(key,ret);  
-  }   
+  if(key!=NULL) {  attrSet(key,ret);  }   
   return ret;
 }
 
@@ -3141,14 +3138,13 @@ int xCalc(int ai,char *calc,char **param) {
 
 //  else { cmdError("ERROR unkown calc"); ret=0; }
   else { sprintf(buffer,"ERROR unkown calc '%s'",calc); cmdError(buffer); ret=0; }
-  
 //  sprintf(buffer,"calc a:%s calc:%s b:%s => %d",ai,calc,bi,ret); logPrintln(LOG_DEBUG,buffer);  
   return ret;
 }
 
 int calcParam(char **param) { return calcParam(cmdParam(param),param); }
 int calcParam(char *val,char **param) {
-  int a=toInt(val);  
+  int a=toInt(val);
   cmdParamSkip(param); // skip spaces
   while(pIsCalc(*param))  {    
     char *calc=cmdParam(param);       
@@ -3186,12 +3182,9 @@ char* cmdParam(char **pp) {
       if(is(p1)) { p1=cmdExec(p1, pp); }
     }
 
-//Serial.print("  cdmParam:");Serial.println(p1);
     if(p1==NULL) { return EMPTY; } 
     cmdParamSkip(pp); // skip spaces
-//Serial.print("  next:");Serial.println(*pp);    
-    if(pIsCalc(*pp)) { // next param calc #
-//Serial.print("  next calc");Serial.println("");    
+    if(pIsCalc(*pp)) { // next param calc 
       sprintf(buffer,"  calc after %s",p1); logPrintln(LOG_DEBUG,buffer);
       int ret=calcParam(p1,pp);
       sprintf(paramBuffer,"%d",ret);
@@ -3347,6 +3340,7 @@ void cmdLoop() {
 }
 
 
+
 void cmdOSSetup() {
   if(serialEnable) { 
     delay(1); Serial.begin(115200); 
@@ -3390,6 +3384,8 @@ void cmdOSLoop() {
   }
   delay(0);
 }
+
+
 
 
 
