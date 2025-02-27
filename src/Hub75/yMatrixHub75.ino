@@ -337,8 +337,10 @@ void pageTitle() {
   drawArc(30, 50, 3, 90,  60, 20, 20, 3, col_red);
   drawArc(30, 50, 3, 90, 60, 10, 10, 3, col_red);
 
-  long val= (100+WiFi.RSSI())/2;
- 
+
+  long val=0;
+  if(WiFi.RSSI()!=0) { val=(100+WiFi.RSSI())/2; }
+
   drawArc(30,50 ,3, 90, val, 30, 30, 3, col_green);
   drawArc(30, 50, 3, 90, val, 20, 20, 3, col_green);
   drawArc(30, 50, 3, 90, val, 10, 10, 3, col_green);
@@ -353,12 +355,10 @@ void pageTitle() {
   drawFull(55,25,8,20,2,(int)ESP.getFreeHeap(),150000,col_red,col_white);
   //if(wifi_image1bit!=NULL && panelY>32) { drawIcon(0,20,0,0, col_red,wifi_image1bit,sizeof(wifi_image1bit));  }
 
-  if(eeMode<=EE_MODE_AP ) {
-    fillRect(panelX-13,panelY-9,panelX,panelY,col_green);
-    drawText(panelX-12,panelY-8,1,"AP",col_red);
-  }else if(eeMode!=EE_MODE_OK && eeMode!=EE_MODE_START) {
+  if(eeMode!=EE_MODE_OK) {
     fillRect(panelX-13,panelY-9,panelX,panelY,col_red);
-    sprintf(buffer, "%d", eeMode); drawText(panelX-12,panelY-8,1,buffer,col_red);
+    sprintf(buffer, "%d", eeMode); drawText(panelX-12,panelY-8,1,buffer,col_black);
+//Serial.print("  eeMode:");Serial.println(eeMode);     
   }
 
   if(is(appIP)) {  

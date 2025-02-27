@@ -6,7 +6,7 @@
 #include <AnimatedGIF.h>
  
 const char *prgTitle = "MatrixCOS";
-const char *prgVersion = "V1.1.0";
+const char *prgVersion = "V1.1.1";
 
 const char* user_admin = "admin"; // default user
 char user_pas[]="";   // default espPas
@@ -79,14 +79,14 @@ void webApp() {
 
 void setup() {
   cmdOSSetup();
-  if(isModeOk()) { 
+  if(isModeNoError()) { 
     matrixSetup();
   }  
 }
 
 void loop() {
   cmdOSLoop();
-  if(isModeOk()) { 
+  if(isModeNoError()) { 
     drawLoop();
     matrixLoop();
     effectLoop();

@@ -6,7 +6,7 @@
 #include <sys/time.h>     // time
 
 /* cmdOS from openON.org develop by mk@almi.de */
-const char *cmdOS="V.0.2.0";
+const char *cmdOS="V.0.2.1";
 char *APP_NAME_PREFIX="CmdOs";
 
 String appIP="";
@@ -917,7 +917,6 @@ void fsSetup() {
   void fsFormat() {}
 #endif
 
-
 //-------------------------------------------------------------------------------------------------------------------
 // LED
 
@@ -1147,14 +1146,27 @@ typedef struct {
 eeBoot_t eeBoot;    // bootloader data 
 
 
+#define MAX_NO_WIFI 30 // Max time 60s no wifi
+#define MAX_NO_SETUP 10 // Max time 60s no wifi
+unsigned long *wifiTime = new unsigned long(0);
+
+#define WIFI_CON_OFF 0
+#define WIFI_CON_CONNECTING 2
+#define WIFI_CON_APCLIENT 3
+#define WIFI_CON_CONNECTED 4
+
+byte wifiStat=WIFI_CON_OFF; //  wifi status
+int bootWifiCount=0; // counter for wifi not reached
+int _lastClient=0; // numer of AP clients
+// boolean _wifiConnect=false; // ist wifi connect or client connect to ap
+
 //-------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------
 // EEPROM
 
 boolean isModeOk() { return eeMode>EE_MODE_AP && eeMode<EE_MODE_ERROR; }
 boolean isModeNoSystemError() { return eeMode<EE_MODE_SYSERROR; }
-
- 
+boolean isModeNoError() { return eeMode<EE_MODE_ERROR; }
 
 /* save to ee */
 void eeSave() {
@@ -1225,6 +1237,10 @@ void eeSetup() {
     if(serialEnable) { Serial.println("### MODE AP "); }
     setAccess(true);
     return ;
+  }else if(eeMode==EE_MODE_OK) { 
+    if(serialEnable) { Serial.println("### MODE OK -> START"); }
+    setMode(EE_MODE_START); // mark  
+    return ;
   }
 
   if(!bootSafe) { 
@@ -1236,11 +1252,6 @@ void eeSetup() {
   } else if(eeMode==EE_MODE_SYSERROR) {
     setAccess(true);
     if(serialEnable) { Serial.println("### MODE SYSERROR "); }
-
-  }else if(eeMode==EE_MODE_OK) { 
-    if(serialEnable) { Serial.println("### MODE OK -> START"); }
-    setMode(EE_MODE_START); // mark  
-
   }else if(eeMode>EE_MODE_WRONG) {
     if(serialEnable) { Serial.println("### MODE RE-INIT"); }
     eeInit(); // re-init
@@ -1259,9 +1270,6 @@ unsigned long *eeTime = new unsigned long(1);
 int okWait=10000; // wait 10s before start => ok 
 
 void eeLoop() {
-  if(eeMode<EE_MODE_ERROR && eeMode>=EE_MODE_START && isTimer(eeTime, okWait)) { 
-    setMode(EE_MODE_OK);  // mark  ok after start
-  }
 }
 
 //-----------------------------------------------------------------------------
@@ -1407,16 +1415,6 @@ void mdnsSetup() {
 
 void webSetup();
 
-#define MAX_NO_WIFI 30 // Max time 60s no wifi
-#define MAX_NO_SETUP 10 // Max time 60s no wifi
-unsigned long *wifiTime = new unsigned long(0);
-
-#define WIFI_CON_OFF 0
-#define WIFI_CON_CONNECTING 2
-#define WIFI_CON_CONNECTED 3
-
-byte wifiStat=WIFI_CON_OFF; //  wifi status
-int bootWifiCount=0; // counter for wifi not reached
 
     
 // start scan network
@@ -1663,16 +1661,17 @@ void wifiAccessPoint(boolean setpUpAP) {
   bootWifiCount=1;
 }
 
-int _lastClient=0;
+
 
 /* this ap is connected from client */
 void wifiAPClientConnect() {
   int numClients = WiFi.softAPgetStationNum();
   if (numClients>_lastClient) {
     _lastClient=numClients;
+    wifiStat=WIFI_CON_APCLIENT;
     sprintf(buffer,"client %d connect to ap",numClients); logPrintln(LOG_DEBUG,buffer);    
     // esp_wifi_ap_get_sta_list()
-  }  
+  } else if(numClients==0) {  wifiStat=WIFI_CON_CONNECTING; } 
 }
 
 /** this client connected to remote set_up */
@@ -1683,15 +1682,6 @@ void wifiAPConnectoToSetup() {
       sprintf(buffer,"WIFI set_up connected %1 call %s",gw.c_str(),setupUrl.c_str()); logPrintln(LOG_SYSTEM,buffer);
       char* ret=cmdRest((char*)setupUrl.c_str());
       logPrintln(LOG_SYSTEM,ret);
-    }else if(serialEnable) { 
-      Serial.print("s");Serial.print(bootWifiCount); Serial.print(WiFi.status());
-      bootWifiCount++;
-      if(bootWifiCount>MAX_NO_SETUP) { // set_up failed => switch to ap
-        logPrintln(LOG_INFO,"\nno wifi set_up found"); 
-//        eeSetMode(EE_MODE_AP); eeSave();espRestart("no setup wifi, fallback ap"); // fallback to AccessPoint on faild try 
-        wifiAccessPoint(false); 
-        eeMode=EE_MODE_AP;        
-      }
     }
 }
 
@@ -1714,6 +1704,7 @@ void wifiConnecting() {
       if(ntpEnable) { ntpSetup(); }
 
     }else { // Connecting
+      wifiStat=WIFI_CON_CONNECTING;
       if(bootWifiCount==0) { 
 //    }  else if( eeMode == EE_MODE_SETUP && bootWifiCount<MAX_NO_SETUP) {  // try faild
 //        logPrintln(LOG_INFO,"no wifi setup"); 
@@ -1787,28 +1778,62 @@ void wifiOff() {
 
 // validate wifi connection
 void wifiValidate() {
-  if(eeMode==EE_MODE_AP) { wifiAPClientConnect(); }
-  else if(eeMode==EE_MODE_SETUP) { wifiAPConnectoToSetup(); }
 
-  
-  else if (wifiStat==WIFI_CON_CONNECTING) { // Connect or Reconnect
-     wifiConnecting();    
-     
+  if(eeMode==EE_MODE_AP) { 
+    wifiAPClientConnect(); 
+    if(isTimer(eeTime, okWait)) {
+      if(!wifiStat!=WIFI_CON_APCLIENT && is(eeBoot.wifi_ssid) && is(eeBoot.wifi_pas)) { 
+        logPrintln(LOG_ERROR,"NO AP => switch to WIFI");
+        eeMode=EE_MODE_START; wifiSetup();
+      }
+    }
+    return ;
+  }else if(eeMode==EE_MODE_SETUP) { 
+    wifiAPConnectoToSetup(); 
+    if(serialEnable) { Serial.print("s");Serial.print(bootWifiCount); Serial.print(WiFi.status()); }
+    if(isTimer(eeTime, okWait)) {
+//      bootWifiCount++;
+//      if(bootWifiCount>MAX_NO_SETUP) { // set_up failed => switch to ap
+      logPrintln(LOG_INFO,"\nno wifi set_up found => switch to AP"); 
+//        eeSetMode(EE_MODE_AP); eeSave();espRestart("no setup wifi, fallback ap"); // fallback to AccessPoint on faild try 
+      eeMode=EE_MODE_AP;  
+      wifiAccessPoint(false);             
+    }    
+  }
+
+  if (wifiStat==WIFI_CON_CONNECTING) { // Connect or Reconnect
+    wifiConnecting();   
+  }   
+
+  if(eeMode==EE_MODE_START && isTimer(eeTime, okWait)) {
+    if(wifiStat==WIFI_CON_CONNECTED) { 
+      logPrintln(LOG_DEBUG,"WIFI ok => EE_MODE_OK");
+      setMode(EE_MODE_OK); 
+    }else { 
+      logPrintln(LOG_ERROR,"NO WIFI => switch to SETUP");
+      eeMode=EE_MODE_SETUP; wifiSetup();
+    }
+
+  }
+
+
+/*
   } else if (eeMode < EE_MODE_OK) {  
-
   } else {
     if (WiFi.status() != WL_CONNECTED) { // connection loose
       wifiStart();
     }
-
   }
+*/
+
 }
 
 
 // start wifi 
 void wifiInit() {
     boolean ssidOk=is(eeBoot.wifi_ssid) && is(eeBoot.wifi_pas);
-
+    appIP=EMPTY;
+    
     if(ssidOk && eeMode==EE_MODE_WIFI_TRY) { // => Try 
       wifiTry(); // start Client
     
