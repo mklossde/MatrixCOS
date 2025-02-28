@@ -6,7 +6,7 @@
 #include <sys/time.h>     // time
 
 /* cmdOS from openON.org develop by mk@almi.de */
-const char *cmdOS="V.0.2.1";
+const char *cmdOS="V.0.2.1-SNAPSHOT";
 char *APP_NAME_PREFIX="CmdOs";
 
 String appIP="";
@@ -69,7 +69,7 @@ int eeAppPos=0;
 //-----------------------------------------------------------------------------
 
 char* cmdLine(char* prg); // execute one line 
-char* cmdPrg(char* prg); // execute a cmd-prg
+char* cmdPrg(char* prg); // execute a cmd-prg 
 char* cmdFile(char* p0); // execute a cmd-file 
 
 //-----------------------------------------------------------------------------
@@ -110,6 +110,9 @@ private:
       if(_isMap) { _key = (char**)realloc(_key, _max * sizeof(char*)); }    
       _vsize = (int*)realloc(_vsize, _max * sizeof(int));
     }
+  }
+  void growTo(int max,void *obj) {
+    for(int i=_max;i<max;i++) { grow(1);_array[_max-1]=obj; }
   }
 
 public:
@@ -172,6 +175,10 @@ public:
   // list ------------------------------------------------
   /* add object to list e.g. list.add(obj); */
   void add(void *obj) { if(_index>=_max) { grow(1); } _array[_index++]=obj; } 
+  void addIndex(int index,void *obj) { 
+//    if(index>=_max) { grow(index-_max+1); } 
+    if(index>=_max) { growTo(index+1,NULL); }     
+    _array[index]=obj; if(index>=_index) { _index=index+1; } } 
   /* get obejct at index e.g. char* value=(char*)list.get(0); */
   void* get(int index) { if(index>=0 && index<_index) { return _array[index]; } else { return NULL; } }  
   /* del object at index e.g. char* old=(char*)list.del(0); */
@@ -360,7 +367,8 @@ String toString(const char *text) {  if(!is(text)) { return EMPTYSTRING; } retur
 
 boolean toBoolean(int i) { return i>0; }
 /* convert char* to boolean */
-boolean toBoolean(char *p) { return p!=NULL && (strcmp(p, "on")==0 || strcmp(p, "true")==0 || strcmp(p, "1")==0); }
+//boolean toBoolean(char *p) { return p!=NULL && (strcmp(p, "on")==0 || strcmp(p, "true")==0 || strcmp(p, "1")==0); }
+boolean toBoolean(char *p) { return p!=NULL && strlen(p)>0 && (strcmp(p, "on")==0 || strcmp(p, "true")==0 || atoi(p)>0); }
 /* convert char* to int */
 int toInt(char *p) { if(p!=NULL && strlen(p)>0) { return atoi(p); } else { return -1; } }
 /* convert char* to double */
@@ -376,6 +384,13 @@ boolean isInt(char *p) {
   else if (*x == '+' || *x == '-')  { x++; } // Handle optional sign
   while (*x) { if (!isdigit(*x)) { return false; } else { x++;} }// Non-digit character found
   return true;  // All characters are digits
+}
+
+boolean isBoolean(char *p) { 
+  char *x=p;
+  if (x==NULL || x==EMPTY || *x == '\0') { return false; } // Empty string is not a number
+  if(*x=='t' || *x=='T' || *x=='f' || *x=='F') { return true; }
+  return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -937,16 +952,17 @@ byte ledIndex=0;
 
 // direct blink blinkSpeed in ms - just for test/debug/error
 void ledBlink(byte times, int blinkSpeed) {
+  if(times*blinkSpeed>10000) { return ; } // ignore delay >10s
   if(ledEnable) {
-    for(int i=0;i<times;i++) {
-      digitalWrite(ledGpio, LED_ON); delay(blinkSpeed); digitalWrite(ledGpio, !LED_ON); delay(blinkSpeed); ledOn=!LED_ON;             
+    for(int i=0;i<times;i++) {     
+      digitalWrite(ledGpio, ledOnTrue); delay(blinkSpeed); digitalWrite(ledGpio, !ledOnTrue); delay(blinkSpeed); ledOn=!ledOnTrue;             
     }
   }
 }
 void ledSet(boolean on) { digitalWrite(ledGpio, on); ledOn=on; }
 
 void ledOff() {
-  if(ledEnable) { digitalWrite(ledGpio, !LED_ON); ledOn=!LED_ON; }
+  if(ledEnable) { digitalWrite(ledGpio, !ledOnTrue); ledOn=!ledOnTrue; }
   ledBlinkOn=false; 
 }
 
@@ -955,7 +971,7 @@ void ledOff() {
 // show actual led blink 
 void ledShow() {
     if(ledEnable) {
-      if(ledOn) { digitalWrite(ledGpio,LED_ON); }else {  digitalWrite(ledGpio,!LED_ON); }     
+      if(ledOn) { digitalWrite(ledGpio,ledOnTrue); }else {  digitalWrite(ledGpio,!ledOnTrue); }     
     }
 }
 
@@ -970,7 +986,7 @@ void ledBlinkPattern(byte max,int (*blinkPattern)[]) {
 void ledSetup() {
   if(!ledEnable) { return ; }
   pinMode(ledGpio, OUTPUT);  
-  sprintf(buffer,"LED setup gpio:%d on:%d",ledGpio,LED_ON); logPrintln(LOG_INFO,buffer);
+  sprintf(buffer,"LED setup gpio:%d on:%d",ledGpio,ledOnTrue); logPrintln(LOG_INFO,buffer);
 }
 
 void ledLoop() {  
@@ -992,6 +1008,20 @@ void ledLoop() {
     ledShow();      
   }
 }  
+
+
+char* ledInit(int pin,boolean on) {
+  if(pin!=-1) { ledGpio=pin; ledOnTrue=on; ledSetup(); }
+  sprintf(buffer,"led pin:%d on:%d",ledGpio,ledOnTrue); return buffer;
+}
+
+char* ledSwitch(char *c,char *c2) {
+  if(isBoolean(c)) { boolean b=toBoolean(c); ledSet(b); sprintf(buffer,"%d",b); return buffer; }
+  // ledBlink time speed 
+  else if(isInt(c)) { int b=toInt(c); int b2=toInt(c2); ledBlink(b,b2); sprintf(buffer,"%d %d",b,b2); return buffer; } 
+  else { return EMPTY; }
+}
+
 #else
 
 void ledBlink(byte times, int blinkSpeed) {}
@@ -1001,6 +1031,9 @@ void ledOff() {}
 void ledSetup() {}
 void ledLoop() {}
 
+char* ledInit(int pin,boolean on) { return EMPTY; }
+char* ledSwitch(char *c,char *c2) { return EMPTY; }
+
 #endif
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -1008,48 +1041,61 @@ void ledLoop() {}
 // sw
 
 #if swEnable
-byte sw_time_base=100; // time base of sw in ms
+//int _sw_time_base=100; // time base of sw in ms
 
 using ButtonEvent = void (*)(byte shortCount,unsigned long longTime); //type aliasing //C++ version of: typedef void (*InputEvent)(const char*)
 unsigned long *switchTime = new unsigned long(0); // sw timer
 
 
-#define  swTickShort 5 // 5*100 => 500ms;
-#define swTickLong 10 // 10*100 => 1s;
-#define swTickMax 255 // too long press 
+#define  swTickShort 4 // 5*100 => 500ms;
+#define swTickLong 5 // 10*100 => 1s;
+#define swTickMax 255 // too long press 255*100 => 25.5s 
 
 class Switch { 
   
 private:
-  byte _swGpio;
-  boolean _swOn=true;
   
   byte swLast=false; // last switch on/off 
   byte swShortCount=0;  // number of short-press count
   unsigned long swLastTime=0; // last change
   byte swTickCount=0;
-  
-  MyEvent _onDown=NULL;
   ButtonEvent _onPress=NULL;
+  List cmdList; // 0=onDown,1..9=on n click,10=on Long
+  
+public:
+  byte _swGpio;
+  boolean _swOn=true;
 
-
-//  SW SETUP    =>  3,5s = SETUP CLIENT (scan and setup client)
-//  SW AP       =>  5,5s = mode AP
-//  SW RESET    =>  10,5s = RESET ALL
+  char* setCmd(int nr,char *cmd) {
+    if(nr>11) { return EMPTY; }
+    else if(nr<0) {
+      sprintf(buffer,"");
+      for(int i=0;i<cmdList.size();i++) {  
+        char *value=(char*)cmdList.get(i);
+        if(is(value)) {
+          sprintf(buffer+strlen(buffer),"swCmd %d \"%s\"\n",i,value);
+        }
+      }
+      return buffer;
+    }else if(!is(cmd)) { char *cmd=(char*)cmdList.get(nr); sprintf(buffer,"swCmd nr:%d cmd:%s",nr,to(cmd)); return buffer;}    
+    else if(size(cmd)<2) { cmdList.del(nr); sprintf(buffer,"swCmd del nr:%d",nr); return buffer; }
+    else { cmdList.addIndex(nr,copy(cmd)); sprintf(buffer,"swCmd set nr:%d cmd:%s",nr,to(cmd)); return buffer;}
+  }
 
   // sw press short times and  long time in ms (e.g. s_s_l => 2,600ms,2)  
   void swPress(byte shortCount,unsigned long longTime) {
-    sprintf(buffer,"SW press short:%d long:%dms",shortCount,longTime); logPrintln(LOG_INFO,buffer); 
-//    if(shortCount==5 && longTime>0) { logPrintln("SW RESET"); bootClear(); bootRestart(); }        //  10,5s = RESET ALL
-//    else  if(shortCount==4 && longTime>0) { logPrintln("SW AP"); mode=MODE_WIFI_AP; wifiSetup(); } //  5,5s = switch to mode AP
-//    else if(shortCount==3 && longTime>0) { logPrintln("SW ScanSetup"); wifiScanSetup(); }              //  3,5s = SETUP CLIENT  
-    if(_onPress!=NULL) { _onPress(shortCount,longTime); }
+    sprintf(buffer,"SW press short:%d long:%dms",shortCount,longTime); logPrintln(LOG_DEBUG,buffer); 
+    if(longTime==0) {
+      char *cmd=(char*)cmdList.get(shortCount); if(is(cmd)) { char *c=copy(cmd); cmdLine(c); delete[] c; }
+    }else {
+      char *cmd=(char*)cmdList.get(10); if(is(cmd)) { char *c=copy(cmd); cmdLine(c); delete[] c; }
+    }
   }
   
   // sw first (immediately) 
   void swFirstDown() {
-//    sprintf(buffer,"SW DOWN"); logPrintln(buffer);     
-    if(_onDown!=NULL) { _onDown(); }
+//    sprintf(buffer,"SW DOWN"); logPrintln(LOG_DEBUG,buffer);     
+    char *cmd=(char*)cmdList.get(0); if(is(cmd)) {char *c=copy(cmd); cmdLine(c); delete[] c; } // cmdLine / cmdPrg
   }
 
 public:
@@ -1060,6 +1106,7 @@ public:
     
   void loop() {
     byte swNow=digitalRead(_swGpio);
+//sprintf(buffer,"sw pin:%d on:%d swShortCount:%d",swGpio,swNow,swShortCount); logPrintln(LOG_DEBUG,buffer);       
     if(swNow!=swLast) { // change
       if(swNow==_swOn) {  // change=>on
         if(swShortCount==0 && swTickCount==0) { swFirstDown(); }
@@ -1082,28 +1129,49 @@ public:
     if(swTickCount>=swTickMax) { swShortCount=0; swTickCount=0; } // max time => reset     
   }
   
-  Switch(int gpio,boolean swOn,ButtonEvent onPress,MyEvent onDown) { 
-    _swGpio=swGpio; _swOn=swOn; _onPress=onPress; _onDown=onDown; swLast=!swOn;
-    pinMode(_swGpio, INPUT_PULLUP);  // input with interal pullup ( _swGpio=GND (false) => pressed) 
-    sprintf(buffer,"SW setup gpio:%d on:%d",_swGpio,_swOn); logPrintln(LOG_INFO,buffer);
+  Switch(int gpio,boolean swOn) { 
+    _swGpio=swGpio; _swOn=swOn; swLast=!swOn;
+    if(swPullUp) { pinMode(_swGpio, INPUT_PULLUP); } // input with interal pullup ( _swGpio=GND (false) => pressed) 
+    else { pinMode(_swGpio, INPUT); }
+    sprintf(buffer,"SW setup gpio:%d on:%d swTimeBase:%d pullUp:%d",_swGpio,_swOn,swTimeBase,swPullUp); logPrintln(LOG_INFO,buffer);
   }  
 };
 
 Switch* sw=NULL;
 
+unsigned long *switchStartup = new unsigned long(1); // sw timer
+
 void swSetup() {
   if(!swEnable) { return ; }
-  sw=new Switch(swGpio,SW_ON,NULL,NULL);
+//  sw=new Switch(swGpio,swOnTrue);
+}
+
+char* swInit(int pin,boolean on,boolean pullUp,int sw_time_base) {
+  if(pin!=-1) { swGpio=pin; swOnTrue=on; swTimeBase=sw_time_base; swPullUp=pullUp; swSetup(); }
+  sprintf(buffer,"sw pin:%d on:%d sw_time_base:%d swPullUp:%d",swGpio,swOnTrue,sw_time_base,swPullUp); return buffer;
+}
+
+char* swCmd(int i,char *cmd) {
+  if(!swEnable || sw==NULL) { return EMPTY; } 
+  return sw->setCmd(i,cmd);
 }
 
 void swLoop() {
   if(!swEnable) { return ; }
-  if(sw!=NULL && isTimer(switchTime, sw_time_base)) { sw->loop(); } // every 100ms
+  else if(isTimer(switchStartup, 10*1000)) { 
+    sw=new Switch(swGpio,swOnTrue);
+    *switchStartup=2;
+  } 
+  else if(sw!=NULL && isTimer(switchTime, swTimeBase)) { 
+    sw->loop(); } // every 100ms
 }
 
 #else
 void swSetup() {}
 void swLoop() {}
+char* swInit(int pin,boolean on) { return EMPTY; }
+char* swCmd(int i,char *cmd) { return EMPTY; }
+char* swInit(int pin,boolean on,boolean pullUp,int sw_time_base) { return EMPTY; }
 #endif
 
 /*
@@ -1267,7 +1335,7 @@ void eeSetup() {
 }
 
 unsigned long *eeTime = new unsigned long(1);
-int okWait=10000; // wait 10s before start => ok 
+int okWait=30000; // wait 30s before WIFI => OK or SETUP => AP => WIFI 
 
 void eeLoop() {
 }
@@ -1559,9 +1627,9 @@ void sleep(char* sleepMode,char *sleepTimeMS) {
       ledBlink(count,100); // blink count
       count++;    
     }
-    if(count==1) {  logPrintln(LOG_SYSTEM,"BOOTSW ap mode");mode=MODE_WIFI_AP; } // hold sw >=5s => Mode Wifi AccessPoint
+    if(count==1) {  logPrintln(LOG_SYSTEM,"BOOTSW ap mode"); eeMode=EE_MODE_AP; } // hold sw >=5s => Mode Wifi AccessPoint
     else if(count==2) {  } 
-    else if(count==3) {  logPrintln(LOG_SYSTEM,"BOOTSW clear");bootClear(); espRestart("SW clear"); } // hold sw >=5s => reset
+//TODO find better way    else if(count==3) {  logPrintln(LOG_SYSTEM,"BOOTSW clear");bootClear(); espRestart("SW clear"); } // hold sw >=5s => reset
   }
 #else 
   void bootSW() {}
@@ -1711,7 +1779,7 @@ void wifiConnecting() {
 //        eeSetMode(EE_MODE_AP); eeSave();espRestart("no setup wifi, fallback ap"); // fallback to AccessPoint on faild try  
 
       }else if(bootWifiCount<MAX_NO_WIFI) {              
-        if(serialEnable) {sprintf(buffer,"%d",WiFi.status()); Serial.print(buffer); }   
+//        if(serialEnable) {sprintf(buffer,"%d",WiFi.status()); Serial.print(buffer); }   
         bootWifiCount++;    
       
       } else if( eeMode == EE_MODE_WIFI_TRY) {  // try faild
@@ -1790,7 +1858,7 @@ void wifiValidate() {
     return ;
   }else if(eeMode==EE_MODE_SETUP) { 
     wifiAPConnectoToSetup(); 
-    if(serialEnable) { Serial.print("s");Serial.print(bootWifiCount); Serial.print(WiFi.status()); }
+//    if(serialEnable) { Serial.print("s");Serial.print(bootWifiCount); Serial.print(WiFi.status()); }
     if(isTimer(eeTime, okWait)) {
 //      bootWifiCount++;
 //      if(bootWifiCount>MAX_NO_SETUP) { // set_up failed => switch to ap
@@ -2866,6 +2934,11 @@ char* cmdExec(char *cmd, char **param) {
   else if(equals(cmd, "rest")) { ret=rest(cmdParam(param)); } // 
   else if(equals(cmd, "cmdRest")) { ret=cmdRest(cmdParam(param)); } // call http/rest and exute retur nbody as cmd
 
+  else if(equals(cmd, "ledInit") && isAccess(ACCESS_ADMIN)) { ret=ledInit(toInt(cmdParam(param)),toBoolean(cmdParam(param))); } //
+  else if(equals(cmd, "led") && isAccess(ACCESS_CHANGE)) { ret=ledSwitch(cmdParam(param),cmdParam(param)); }
+  else if(equals(cmd, "swInit") && isAccess(ACCESS_ADMIN)) { ret=swInit(toInt(cmdParam(param)),toBoolean(cmdParam(param)),toBoolean(cmdParam(param)),toInt(cmdParam(param))); } //
+  else if(equals(cmd, "swCmd") && isAccess(ACCESS_ADMIN)) { ret=swCmd(toInt(cmdParam(param)),cmdParam(param)); }
+
   // timer 1 0 -1 -1 -1 -1 -1 "drawLine 0 0 20 20 888"
   else if(equals(cmd, "timer") && isAccess(ACCESS_CHANGE)) { timerAdd(toBoolean(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),cmdParam(param));  }
   else if(equals(cmd, "timerDel") && isAccess(ACCESS_CHANGE)) { timerDel(toInt(cmdParam(param)));  }
@@ -3115,7 +3188,7 @@ void attrSet(char *key,String value) {
 void attrSet(char *key,char *value) { attrMap.replace(_toAttr(key),value,strlen(value));  }
 void attrDel(char *key) { attrMap.del(_toAttr(key)); }
 char* attrInfo() {
-   sprintf(buffer,"");
+  sprintf(buffer,"");
   for(int i=0;i<attrMap.size();i++) {  
     char *key=attrMap.key(i);
     char *value=(char*)attrMap.get(i);
@@ -3297,7 +3370,7 @@ char* prgStop() { *_prgTime=2; return "stop"; }
 
 char* cmdPrg(char* prg) {   
   if(_prg!=NULL) { delete[] _prg; _prg=NULL; _prgPtr=NULL; } // clear old prg
-  if(prg==NULL) { return "prg missing"; }
+  if(!is(prg)) { return "prg missing"; }
   _prg=prg;
 //  replace(_prg,'\r',';'); // 
 //  replace(_prg,'\n',';'); // newLine => cmd End  
@@ -3373,7 +3446,7 @@ void cmdOSSetup() {
   }
   eeSetup();
   ledSetup();  
-  swSetup(); 
+//  swSetup(); 
   bootSetup();
   
   fsSetup();
@@ -3387,6 +3460,8 @@ void cmdOSSetup() {
     mqttSetup();  
     timeSteup();  
   }
+
+  swSetup(); 
 }
 
 void cmdOSLoop() {

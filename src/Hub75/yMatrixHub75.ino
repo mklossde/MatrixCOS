@@ -366,7 +366,7 @@ void pageTitle() {
   }
 
   draw();
-  sprintf(buffer, "drawTitle red:%d green:%d blue:%d  white:%d",col_red,col_green,col_blue,col_white); logPrintln(LOG_DEBUG,buffer);
+//  sprintf(buffer, "drawTitle red:%d green:%d blue:%d  white:%d",col_red,col_green,col_blue,col_white); logPrintln(LOG_DEBUG,buffer);
 }
 
 void pageTest() {
@@ -432,8 +432,10 @@ void pageGif() {
   pageClear();
   int max=fsDirSize(".gif");
   int f=random(0,max);
-  char* name=fsFile(".gif",f,0);
+  char* name=fsFile(".gif",f,0);  
+  if(!is(name)) { sprintf(buffer,"pageGif missing %d/%d",f,max);logPrintln(LOG_ERROR,buffer); return ; }
   sprintf(paramBuffer,"%s",name);
+  sprintf(buffer,"pageGif %d/%d %s",f,max,to(paramBuffer));logPrintln(LOG_INFO,buffer);
   drawFile(paramBuffer,paramBuffer,0,0,false);
   delay(250);
   drawFileClose();
@@ -443,6 +445,15 @@ void pageGif() {
   delay(1300);
 }
 
+int pageCmdNr=0;
+
+void pageCmd() {
+  pageClear();  
+  int max=fsDirSize(".cmd");
+  pageCmdNr++; if(pageCmdNr>=max) { pageCmdNr=0; }
+  char* name=fsFile(".cmd",pageCmdNr,0);
+  cmdFile(name);
+}
 
 //-----------------------------------------------------------
 
@@ -564,6 +575,7 @@ void matrixLoop() {
       else if(matrixPage==3) { pageTest(); } 
       else if(matrixPage==4) { pageTime(); } 
       else if(matrixPage==5) { pageGif(); } 
+      else if(matrixPage==6) { pageCmd(); } 
     }
   }else {
     if(isTimer(matrixPageTime, 1000)) { matrixStatus(); } // draw staus

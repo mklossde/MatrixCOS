@@ -37,12 +37,15 @@ boolean bootSafe=false;    // enable/disbale boot safe
 #define updateEnable false     // enabled/disbale update firmware via web 
 
 #define ledEnable false       // enable/disbale serial
-#define ledGpio 4             // io of led
-#define LED_ON true           // gpio false=led-on
+int ledGpio=15;            // io of led
+boolean ledOnTrue=true;           // gpio false=led-on
 
 #define swEnable false        // enable/disbale switch
-#define swGpio 13             // io pin of sw 
-#define SW_ON false           // gpio false=sw-pressed
+int swGpio=0;                // io pin of sw 
+int swTimeBase=100;       // prell and lonePress Timebase (e.g. 100ms)
+boolean swOnTrue=false;      // gpio false=sw-pressed
+boolean swPullUp=true;      // enable pullUp
+int swSetupTime=5000;     // 0=sw is init during setzp, >0 sw is init after swSetupTime
 
 // app
 boolean matrixEnable=true; // enable matrix
@@ -81,6 +84,9 @@ void setup() {
   cmdOSSetup();
   if(isModeNoError()) { 
     matrixSetup();
+    swCmd(1,"pageNext"); // nextPage on one sw click
+    swCmd(2,"pageCmd"); // nextCmd on two sw click
+    swCmd(10,"drawOff"); // drawOff on two sw click
   }  
 }
 

@@ -514,6 +514,8 @@ char* matrixCmd(char *cmd, char **param) {
     else if(strcmp(cmd, "pageTime")==0) { *matrixPageTime=0; matrixPage=4; return EMPTY; }
     // page Image
     else if(strcmp(cmd, "pageImage")==0) { *matrixPageTime=0; matrixPage=5; return EMPTY; }
+    // next page
+    else if(strcmp(cmd, "pageNext")==0) { *matrixPageTime=0; matrixPage++; if(matrixPage>6) { matrixPage=1; } return EMPTY; }
 
     // drawFile file type x y - draw a gif/icon at x,y
     else if(strcmp(cmd, "drawFile")==0) { char *f=cmdParam(param); drawFile(f,f,toInt(cmdParam(param)),toInt(cmdParam(param)),false); return EMPTY; }    
