@@ -6,7 +6,7 @@
 #include <AnimatedGIF.h>
  
 const char *prgTitle = "MatrixCOS";
-const char *prgVersion = "V1.1.1";
+const char *prgVersion = "V1.1.2";
 
 const char* user_admin = "admin"; // default user
 char user_pas[]="";   // default espPas
