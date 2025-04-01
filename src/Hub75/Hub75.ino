@@ -48,8 +48,7 @@ boolean swPullUp=true;      // enable pullUp
 int swSetupTime=5000;     // 0=sw is init during setzp, >0 sw is init after swSetupTime
 
 // app
-boolean matrixEnable=true; // enable matrix
-
+boolean displayEnable=true; // enable display
 
 int _webPort = 80;
 AsyncWebServer server(_webPort);

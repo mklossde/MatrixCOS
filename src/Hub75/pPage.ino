@@ -4,9 +4,15 @@ unsigned long *matrixPageTime = new unsigned long(0);
 
 byte _effectType=0;
 
+int col_red;
+int col_white;
+int col_black;
+int col_green;
+int col_blue;
+
 /* clear from page */
 void pageClear() {
-  if(eeMatrix.displayBuffer) { display->fillRect(0,0,eeMatrix.panelX,eeMatrix.panelY,0); } 
+  if(eeDisplay.displayBuffer) { display->fillRect(0,0,panelX,panelY,0); } 
   else { displayClear(); }
   _effectType=0; // effect off
 }
@@ -140,6 +146,12 @@ void pageCmd() {
 //-----------------------------------------------------------
 
 void matrixSetup() {
+  col_red=toColor444(15,0,0);
+  col_white=toColor444(15,15,15);
+  col_black=toColor444(0,0,0);  
+  col_green=toColor444(0,15,0);  
+  col_blue=toColor444(0,0,15);  
+    
   pageTest();  
   pageTitle(); matrixPage=1;  
 }
@@ -150,7 +162,7 @@ void matrixStatus() {
 }
 
 void matrixLoop() {
-  if(!matrixEnable && !_displaySetup) { return ; }
+  if(!displayEnable && !_displaySetup) { return ; }
   if(matrixPage>0) {
     if(isTimer(matrixPageTime, 1000)) { 
       if(matrixPage==1) { pageTitle(); } // draw title again 

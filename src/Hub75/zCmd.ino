@@ -7,35 +7,35 @@
 char* cmdSetMatrix(char* p0,char* p1,char* p2,char* p3,char* p4,char* p5) {  
   if(is(p0)) { 
     if(!isAccess(ACCESS_ADMIN))  { return "ACCESS DENIED setMatrix"; }
-    if(is(p0,1,3)) { eeMatrix.panelX=toInt(p0); }
-    if(is(p1,1,3)) { eeMatrix.panelY=toInt(p1); }
-    if(is(p2,1,2)) { eeMatrix.panelChain=toInt(p2); }  
-    if(is(p3,1,3)) { eeMatrix.brightness=toInt(p3);}
-    if(is(p4,1,2)) { eeMatrix.rotation=toInt(p4);}
-    if(is(p5,1,64)) { strcpy(eeMatrix.pins,p5); }
+    if(is(p0,1,3)) { eeDisplay.pX=toInt(p0); }
+    if(is(p1,1,3)) { eeDisplay.pY=toInt(p1); }
+    if(is(p2,1,2)) { eeDisplay.panelChain=toInt(p2); }  
+    if(is(p3,1,3)) { eeDisplay.brightness=toInt(p3);}
+    if(is(p4,1,2)) { eeDisplay.rotation=toInt(p4);}
+    if(is(p5,1,64)) { strcpy(eeDisplay.pins,p5); }
     displaySave();
   }
   return displayInfo();
 }
 
 char* cmdSetMatrix2(boolean dmaBuffer, boolean displayBuffer,int latBlanking,boolean clkphase,char *driver) {
-  eeMatrix.dmaBuffer=dmaBuffer;
-  eeMatrix.displayBuffer=displayBuffer;
-  eeMatrix.latBlanking=latBlanking;
-  eeMatrix.clkphase=clkphase;
-  if(is(driver)) { eeMatrix.driver=copy(driver); }
+  eeDisplay.dmaBuffer=dmaBuffer;
+  eeDisplay.displayBuffer=displayBuffer;
+  eeDisplay.latBlanking=latBlanking;
+  eeDisplay.clkphase=clkphase;
+  if(is(driver)) { eeDisplay.driver=copy(driver); }
   displaySave();
   return displayInfo();
 }
 
 void matrixWebSetupSet(AsyncWebServerRequest *request) {
   String v;
-  v=webParam(request,"panelX"); if(is(v,1,5)) {  eeMatrix.panelX=v.toInt(); }
-  v=webParam(request,"panelY"); if(is(v,1,5)) {  eeMatrix.panelY=v.toInt(); }
-  v=webParam(request,"chain"); if(is(v,1,2)) {  eeMatrix.panelChain=v.toInt(); }
-  v=webParam(request,"pins"); if(is(v,1,64)) {  v.toCharArray(eeMatrix.pins, sizeof(eeMatrix.pins)); }
-  v=webParam(request,"brightness"); if(is(v,1,4)) {  eeMatrix.brightness=v.toInt(); }
-  v=webParam(request,"rotation"); if(is(v,1,2)) {  eeMatrix.rotation=v.toInt(); }
+  v=webParam(request,"panelX"); if(is(v,1,5)) {  eeDisplay.pX=v.toInt(); }
+  v=webParam(request,"panelY"); if(is(v,1,5)) {  eeDisplay.pY=v.toInt(); }
+  v=webParam(request,"chain"); if(is(v,1,2)) {  eeDisplay.panelChain=v.toInt(); }
+  v=webParam(request,"pins"); if(is(v,1,64)) {  v.toCharArray(eeDisplay.pins, sizeof(eeDisplay.pins)); }
+  v=webParam(request,"brightness"); if(is(v,1,4)) {  eeDisplay.brightness=v.toInt(); }
+  v=webParam(request,"rotation"); if(is(v,1,2)) {  eeDisplay.rotation=v.toInt(); }
   displaySave();
 } 
 
@@ -45,12 +45,12 @@ void matrixWebSetup(AsyncWebServerRequest *request) {
   String html = ""; html = pageHead(html, "MatrixHup");
   html+= "[<a href='/config'>network</a>][<a href='/appSetup'>app</a>]";
   html = pageForm(html, "MatrixHub75 config");
-  html = pageInput(html, "panelX", to(eeMatrix.panelX));
-  html = pageInput(html, "panelY", to(eeMatrix.panelY));
-  html = pageInput(html, "chain", to(eeMatrix.panelChain));
-  html = pageInput(html, "pins", eeMatrix.pins);
-  html = pageInput(html, "brightness", to(eeMatrix.brightness));
-  html = pageInput(html, "rotation", to(eeMatrix.rotation));
+  html = pageInput(html, "panelX", to(eeDisplay.pX));
+  html = pageInput(html, "panelY", to(eeDisplay.pY));
+  html = pageInput(html, "chain", to(eeDisplay.panelChain));
+  html = pageInput(html, "pins", eeDisplay.pins);
+  html = pageInput(html, "brightness", to(eeDisplay.brightness));
+  html = pageInput(html, "rotation", to(eeDisplay.rotation));
   html = pageButton(html, "ok", "ok");
   html = pageFormEnd(html);
   html = pageEnd(html,message);

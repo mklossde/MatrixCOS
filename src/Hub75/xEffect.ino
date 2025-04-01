@@ -19,12 +19,12 @@ unsigned long *effectTimer = new unsigned long(0);
    plus>5,<-5 => matrix/random shift e.g. effect 1 64 100 0 -5 
 */
 void effectShift() {
-    for(int x=0;x<eeMatrix.panelX;x++) {
-      for(int y=0;y<eeMatrix.panelY;y++) {
+    for(int x=0;x<panelX;x++) {
+      for(int y=0;y<panelY;y++) {
         GFXcanvas16 *canvas=(GFXcanvas16*)display;
         int px=x, py=y; uint16_t color=0;
-        if(_effectA<0) { px=eeMatrix.panelX-x-1; }        
-        if(_effectB<0) { py=eeMatrix.panelY-y-1; }
+        if(_effectA<0) { px=panelX-x-1; }        
+        if(_effectB<0) { py=panelY-y-1; }
         int posX, posY;
         if(_effectA>=5) { posX=px+random(1,_effectA); }        
         else if(_effectA<=-5) { posX=px-random(1,(_effectA*-1)); }    
@@ -32,7 +32,7 @@ void effectShift() {
         if(_effectB>=5) { posY=py+random(1,_effectB); } 
         else if(_effectB<=-5) { posY=py-random(1,(_effectB*-1)); } 
         else { posY=py+_effectB; }
-        if(posX>=0 && posX<eeMatrix.panelX && posY>=0 && posY<eeMatrix.panelY) { color= canvas->getPixel(posX,posY); }
+        if(posX>=0 && posX<panelX && posY>=0 && posY<panelY) { color= canvas->getPixel(posX,posY); }
         canvas->drawPixel(px,py,color);
       }
     }
@@ -40,7 +40,7 @@ void effectShift() {
 }
 
 void effectLoop() {
-  if(eeMatrix.displayBuffer && _effectType!=0 && _effectIndex<_effectStep && isTimer(effectTimer, _effectSpeed)) { 
+  if(eeDisplay.displayBuffer && _effectType!=0 && _effectIndex<_effectStep && isTimer(effectTimer, _effectSpeed)) { 
     if(_effectType==1) { effectShift();  }
 //    else if(_effectType==2) { effectDim();  }
     _effectIndex++;

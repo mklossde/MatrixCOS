@@ -14,7 +14,8 @@ void GIFDraw(GIFDRAW *pDraw) {
     int x, y, iWidth;
 
     iWidth = pDraw->iWidth;
-    if (iWidth > MATRIX_WIDTH) { iWidth = MATRIX_WIDTH; }      
+//    if (iWidth > MATRIX_WIDTH) { iWidth = MATRIX_WIDTH; }      
+    if (iWidth > panelX) { iWidth = panelX; }   
 
     usPalette = pDraw->pPalette;
     y = pDraw->iY + pDraw->y; // current line

@@ -13,8 +13,8 @@ int panelY=64;
 
 // Matrix store structur
 typedef struct {
-  int panelX=64;
-  int panelY=64;
+  int pX=panelX;
+  int pY=panelY;
   byte panelChain=1;
   char pins[64]="0,15,4,16,27,17,5,18,19,21,12,33,25,22";
   byte brightness=90;
@@ -24,8 +24,8 @@ typedef struct {
   byte latBlanking=1;
   boolean clkphase=true;  
   char* driver=NULL;
-} eeMatrix_t;
-eeMatrix_t eeMatrix;    // matrix store object 
+} eeDisplay_t;
+eeDisplay_t eeDisplay;    // matrix store object 
 
 HUB75_I2S_CFG::i2s_pins _pins;
 
@@ -35,9 +35,9 @@ boolean _displaySetup=false; // matrix setup ok
 
 char* displayInfo() {
   sprintf(buffer, "Matrix enabled:%d ok:%d panelX:%d panelY:%d panelChain:%d brightness:%d rotation:%d pins:%s dmaBuffer:%d disBuffer:%d latBlanking:%d clkphase:%d",
-    matrixEnable,_displaySetup,eeMatrix.panelX,eeMatrix.panelY,eeMatrix.panelChain,eeMatrix.brightness,eeMatrix.rotation,eeMatrix.pins,
-    eeMatrix.dmaBuffer,eeMatrix.displayBuffer,
-    eeMatrix.latBlanking, eeMatrix.clkphase);
+    displayEnable,_displaySetup,eeDisplay.pX,eeDisplay.pY,eeDisplay.panelChain,eeDisplay.brightness,eeDisplay.rotation,eeDisplay.pins,
+    eeDisplay.dmaBuffer,eeDisplay.displayBuffer,
+    eeDisplay.latBlanking, eeDisplay.clkphase);
     return buffer;
 }
 
@@ -45,32 +45,32 @@ void displaySave() {
   if(eeAppPos<=0) { return ; }
   EEPROM.begin(EEBOOTSIZE);
 
-  EEPROM.put(eeAppPos, eeMatrix ); 
+  EEPROM.put(eeAppPos, eeDisplay ); 
   EEPROM.commit();  // Only needed for ESP8266 to get data written
   sprintf(buffer, "displaySave eeAppPos:%d panelX:%d panelY:%d panelChain:%d brightness:%d rotation:%d pins:%s",
-    eeAppPos,eeMatrix.panelX,eeMatrix.panelY,eeMatrix.panelChain,eeMatrix.brightness,eeMatrix.rotation,eeMatrix.pins);logPrintln(LOG_INFO,buffer);
+    eeAppPos,eeDisplay.pX,eeDisplay.pY,eeDisplay.panelChain,eeDisplay.brightness,eeDisplay.rotation,eeDisplay.pins);logPrintln(LOG_INFO,buffer);
 }
 
 void displayLoad() {
   if(eeAppPos<=0) { return ; }
   else if(strcmp(eeType,bootType)!=0) { return ; }   // validate
   EEPROM.begin(EEBOOTSIZE);
-  EEPROM.get(eeAppPos, eeMatrix); // eeBoot read
+  EEPROM.get(eeAppPos, eeDisplay); // eeBoot read
   EEPROM.end(); 
   sprintf(buffer, "displayLoad eeAppPos:%d panelX:%d panelY:%d panelChain:%d brightness:%d rotation:%d pins:%s",
-    eeAppPos,eeMatrix.panelX,eeMatrix.panelY,eeMatrix.panelChain,eeMatrix.brightness,eeMatrix.rotation,eeMatrix.pins);logPrintln(LOG_INFO,buffer);
+    eeAppPos,eeDisplay.pX,eeDisplay.pY,eeDisplay.panelChain,eeDisplay.brightness,eeDisplay.rotation,eeDisplay.pins);logPrintln(LOG_INFO,buffer);
 }
 
 
 boolean displayInit() {
-    displayLoad(); // load eeMatrix
-    if(!is(eeMatrix.pins,10,64)) { logPrintln(LOG_SYSTEM,"matrix init wrong"); return false;}
+    displayLoad(); // load eeDisplay
+    if(!is(eeDisplay.pins,10,64)) { logPrintln(LOG_SYSTEM,"matrix init wrong"); return false;}
 
-    panelX=eeMatrix.panelX;
-    panelY=eeMatrix.panelY;
+    panelX=eeDisplay.pX;
+    panelY=eeDisplay.pY;
     if(panelX<=0 || panelY<=0) { sprintf(buffer,"matrix size wrong %d %d",panelX,panelY); logPrintln(LOG_ERROR,buffer); return false; }
 
-    char* temp = strdup(eeMatrix.pins);  // Duplicate the string to avoid modifying the original
+    char* temp = strdup(eeDisplay.pins);  // Duplicate the string to avoid modifying the original
     char* token = strtok(temp, ",");
     int index = 0;
 
@@ -102,18 +102,16 @@ boolean displayInit() {
 /* draw actual screen => flip to back buffer */
 void displayDraw() {
   if(!_displaySetup) { return ; }
-  if(eeMatrix.dmaBuffer) { dma_display->flipDMABuffer(); }// Show the back buffer, set currently output buffer to the back (i.e. no longer being sent to LED panels)
-  else if(eeMatrix.displayBuffer) {
+  if(eeDisplay.dmaBuffer) { dma_display->flipDMABuffer(); }// Show the back buffer, set currently output buffer to the back (i.e. no longer being sent to LED panels)
+  else if(eeDisplay.displayBuffer) {
     GFXcanvas16 *canvas=(GFXcanvas16*)display;  
     uint16_t *buffer=canvas->getBuffer();
-    dma_display->drawRGBBitmap(0,0,buffer,eeMatrix.panelX,eeMatrix.panelY);
+    dma_display->drawRGBBitmap(0,0,buffer,panelX,panelY);
   }
 }
 
 /* clear display */
-void displayClear() {
-  dma_display->clearScreen();
-}
+void displayClear() { if(!_displaySetup) { return ; } dma_display->clearScreen(); }
 
 /* set Brightness 0-255 **/
 void displayBrightness(int b) {  if(!_displaySetup) { return ; } dma_display->setBrightness8(b); } 
@@ -124,43 +122,33 @@ uint16_t toColor565(int r,int g,int b) { if(!_displaySetup) { return -1; } retur
 
 //-------------------------------------------------------------------
 
-int col_red;
-int col_white;
-int col_black;
-int col_green;
-int col_blue;
 
 void displaySetup() {  
-  if(!matrixEnable) { return ; }
-  else if(!displayInit()) { matrixEnable=false; return ; } // init wrong
+  if(!displayEnable) { return ; }
+  else if(!displayInit()) { displayEnable=false; return ; } // init wrong
   
   // Module configuration
-  HUB75_I2S_CFG mxconfig(eeMatrix.panelX, eeMatrix.panelY, eeMatrix.panelChain,_pins );
-  mxconfig.double_buff = eeMatrix.dmaBuffer; // enable/disable buffer
+  HUB75_I2S_CFG mxconfig(eeDisplay.pX, eeDisplay.pY, eeDisplay.panelChain,_pins );
+  mxconfig.double_buff = eeDisplay.dmaBuffer; // enable/disable buffer
   _displaySetup=true;  
 
-//TODO driver  if(is(eeMatrix.driver)) { mxconfig.driver = eeMatrix.driver; }
+//TODO driver  if(is(eeDisplay.driver)) { mxconfig.driver = eeDisplay.driver; }
 
-  mxconfig.clkphase = eeMatrix.clkphase;
+  mxconfig.clkphase = eeDisplay.clkphase;
 
   // Display Setup
   dma_display = new MatrixPanel_I2S_DMA(mxconfig);
-  col_red=dma_display->color444(15,0,0);
-  col_white=dma_display->color444(15,15,15);
-  col_black=dma_display->color444(0,0,0);  
-  col_green=dma_display->color444(0,15,0);  
-  col_blue=dma_display->color444(0,0,15);  
 
-  dma_display->setLatBlanking(eeMatrix.latBlanking);
+  dma_display->setLatBlanking(eeDisplay.latBlanking);
 
-  if(eeMatrix.displayBuffer) { 
-    display=new GFXcanvas16(eeMatrix.panelX, eeMatrix.panelY);  
-    if(display==NULL) {  display=dma_display; eeMatrix.displayBuffer=false; } // no ram
+  if(eeDisplay.displayBuffer) { 
+    display=new GFXcanvas16(eeDisplay.pX, eeDisplay.pY);  
+    if(display==NULL) {  display=dma_display; eeDisplay.displayBuffer=false; } // no ram
   }else { display=dma_display; }
 
   dma_display->begin();
-  dma_display->setBrightness8(eeMatrix.brightness);  //  Brightness 0-255
-  dma_display->setRotation(eeMatrix.rotation);      // Rotation, 0-4
+  dma_display->setBrightness8(eeDisplay.brightness);  //  Brightness 0-255
+  dma_display->setRotation(eeDisplay.rotation);      // Rotation, 0-4
   dma_display->clearScreen();
 }
 

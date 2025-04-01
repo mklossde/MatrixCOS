@@ -17,7 +17,7 @@ void draw() {
 /* clear display , stop play page */
 void drawClear() {   
   if(!_displaySetup) { return ; }
-  if(eeMatrix.displayBuffer) { display->fillRect(0,0,eeMatrix.panelX,eeMatrix.panelY,0); } else { displayClear(); }
+  if(eeDisplay.displayBuffer) { display->fillRect(0,0,panelX,panelY,0); } else { displayClear(); }
   matrixPage=0;
 } 
 
