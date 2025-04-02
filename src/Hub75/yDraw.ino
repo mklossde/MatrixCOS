@@ -33,7 +33,7 @@ void drawPixel(uint16_t x, uint16_t y, uint16_t color) {
   if(!_displaySetup) { return ; } if(color==-1) { color=_color; } display->drawPixel(x,y, color); }  
 /* draw line */
 void drawLine(int x,int y, int w,int h,int color) { if(!_displaySetup) { return ; } if(color==-1) { color=_color; } display->drawLine(x,y,w,h, color); }    
-/* draw rec */
+/* draw rec (x,y,x+w,y+h)*/
 void drawRect(int x,int y, int w,int h,int color) {if(!_displaySetup) { return ; } if(color==-1) { color=_color; } display->drawRect(x,y,w,h, color); }   
 /* draw fill rec */
 void fillRect(int x,int y, int w,int h,int color) { if(!_displaySetup) { return ; }if(color==-1) { color=_color; } display->fillRect(x,y,w,h, color); }  
@@ -82,6 +82,11 @@ void drawText(int x,int y, int size, const char *str,int color) {
   display->setCursor(x,y);    // start at top left, with 8 pixel of spacing
   display->setTextColor(color); // set color
   display->print(str);  
+}
+
+void getTextBounds(const char *text,uint16_t *w,uint16_t *h) {
+  int16_t  x1, y1; 
+  display->getTextBounds(text, 0, 0, &x1, &y1, w, h);
 }
 
 void drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h, uint16_t color) {

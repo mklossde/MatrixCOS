@@ -115,6 +115,7 @@ void displayClear() { if(!_displaySetup) { return ; } dma_display->clearScreen()
 
 /* set Brightness 0-255 **/
 void displayBrightness(int b) {  if(!_displaySetup) { return ; } dma_display->setBrightness8(b); } 
+char* displayRotation(int r) {  if(r>=0) { display->setRotation(r); } sprintf(buffer,"%d",display->getRotation()); return buffer; } 
 
 /* color color */
 uint16_t toColor444(int r,int g,int b) { if(!_displaySetup) { return -1; } return dma_display->color444(r, g, b); }

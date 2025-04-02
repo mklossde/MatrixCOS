@@ -20,33 +20,37 @@ void pageClear() {
 void pageTitle() {
   pageClear();
 
+  int wh=panelX/2, hh=panelY/2;
+
   // WIFI  
-  drawArc(30,50 ,3, 90, 60, 30, 30, 3, col_red);
-  drawArc(30, 50, 3, 90,  60, 20, 20, 3, col_red);
-  drawArc(30, 50, 3, 90, 60, 10, 10, 3, col_red);
+  long val=0; if(WiFi.RSSI()!=0) { val=(100+WiFi.RSSI())/2; }
 
+  uint16_t w=30,h=30;
+  int x=wh,y=50;
+  drawArc(x, y, 3, 90, 60, w, h, 3, col_red);
+  drawArc(x, y, 3, 90, 60, w-10, h-10, 3, col_red);
+  drawArc(x, y, 3, 90, 60, w-20, h-20, 3, col_red);  
+  drawArc(x, y ,3, 90, val, w, h, 3, col_green);
+  drawArc(x, y, 3, 90, val, w-10, h-10, 3, col_green);
+  drawArc(x, y, 3, 90, val, w-20, h-20, 3, col_green);
 
-  long val=0;
-  if(WiFi.RSSI()!=0) { val=(100+WiFi.RSSI())/2; }
+  fillTriangle(x, y, x-w, y-h, x-w, y, col_black);
+  fillTriangle(x, y, x+w, y-h, x+w, y, col_black);
+  fillCircle(x, y+10, 3, col_red);
 
-  drawArc(30,50 ,3, 90, val, 30, 30, 3, col_green);
-  drawArc(30, 50, 3, 90, val, 20, 20, 3, col_green);
-  drawArc(30, 50, 3, 90, val, 10, 10, 3, col_green);
-
-  fillTriangle(30, 50, 0, 15, 0, 50, 0);
-  fillTriangle(30, 50, 64, 15, 64, 50, 0);
-  fillCircle(30, 50, 3, col_red);
-
-  drawText(1,1,1,prgTitle,col_red);   
+  // title
+  int16_t  x1, y1; 
+  display->getTextBounds(prgTitle, 0, 0, &x1, &y1, &w, &h);
+  x=wh-w/2, y=1;
+  drawText(x,y,1,prgTitle,col_red);   
+  // version
   drawText(1,panelY-8,1,prgVersion,col_red);   
-
-  drawFull(55,25,8,20,2,(int)ESP.getFreeHeap(),150000,col_red,col_white);
-  //if(wifi_image1bit!=NULL && panelY>32) { drawIcon(0,20,0,0, col_red,wifi_image1bit,sizeof(wifi_image1bit));  }
+  // FreeHeap
+  drawFull(panelX-5,25,8,20,2,(int)ESP.getFreeHeap(),150000,col_red,col_white);
 
   if(eeMode!=EE_MODE_OK) {
     fillRect(panelX-13,panelY-9,panelX,panelY,col_red);
-    sprintf(buffer, "%d", eeMode); drawText(panelX-12,panelY-8,1,buffer,col_black);
-//Serial.print("  eeMode:");Serial.println(eeMode);     
+    sprintf(buffer, "%d", eeMode); drawText(panelX-12,panelY-8,1,buffer,col_black);  
   }
 
   if(is(appIP)) {  
@@ -57,16 +61,34 @@ void pageTitle() {
 //  sprintf(buffer, "drawTitle red:%d green:%d blue:%d  white:%d",col_red,col_green,col_blue,col_white); logPrintln(LOG_DEBUG,buffer);
 }
 
+void pageStart() {
+  pageClear();  
+  int wh=panelX/2, wy=panelY/2, hp=panelY/panelX, ii=0;
+  int d=1000/wh;
+  for(int i=0;i<wh;i++) {
+    drawRect(wh-i,wy-ii,(i*2),(ii*2),col_white);
+    ii+=hp;  
+    draw();
+    delay(d);  
+  }
+}
+
+
+/*
 void pageTest() {
   pageClear();
-  for (int i=32; i >=0; i--){ 
-    int w=panelX-(i*2);
-    int h=panelY-(i*2);
-    drawRect(i, i, w, h,col_white); // white rect
+  int wh=panelX/2, y=panelY/2, hp=panelY/panelX;
+  for (int x=wh; x >=0; x--){ 
+    int w=panelX-(x*2);
+    int h=panelY-(y*2);
+//    drawRect(x, y, w, h,col_white); // white rect
+    pageClear();drawLine(x,y,w,h,col_white);
+    y-=hp; 
     draw();
     delay(25);
   }
 }
+*/
 
 /* show esp page */
 void pageEsp() {
@@ -145,14 +167,14 @@ void pageCmd() {
 
 //-----------------------------------------------------------
 
-void matrixSetup() {
+void pageSetup() {
   col_red=toColor444(15,0,0);
   col_white=toColor444(15,15,15);
   col_black=toColor444(0,0,0);  
   col_green=toColor444(0,15,0);  
   col_blue=toColor444(0,0,15);  
     
-  pageTest();  
+  pageStart();  
   pageTitle(); matrixPage=1;  
 }
 
@@ -161,13 +183,13 @@ void matrixStatus() {
   else if(eeMode!=EE_MODE_OK) { drawLine(0,panelY,panelX,panelY,col_red);} // red => Mode wrong  
 }
 
-void matrixLoop() {
+void pageLoop() {
   if(!displayEnable && !_displaySetup) { return ; }
   if(matrixPage>0) {
     if(isTimer(matrixPageTime, 1000)) { 
       if(matrixPage==1) { pageTitle(); } // draw title again 
       else if(matrixPage==2) { pageEsp(); } 
-      else if(matrixPage==3) { pageTest(); } 
+      else if(matrixPage==3) { pageStart(); } 
       else if(matrixPage==4) { pageTime(); } 
       else if(matrixPage==5) { pageGif(); } 
       else if(matrixPage==6) { pageCmd(); } 

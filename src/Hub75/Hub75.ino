@@ -83,7 +83,7 @@ void setup() {
   cmdOSSetup();
   if(isModeNoError()) { 
     displaySetup();
-    matrixSetup();
+    pageSetup();
     swCmd(1,"pageNext"); // nextPage on one sw click
     swCmd(2,"pageCmd"); // nextCmd on two sw click
     swCmd(10,"drawOff"); // drawOff on two sw click
@@ -94,7 +94,7 @@ void loop() {
   cmdOSLoop();
   if(isModeNoError()) { 
     drawLoop();
-    matrixLoop();
+    pageLoop();
     effectLoop();
   }  
 }

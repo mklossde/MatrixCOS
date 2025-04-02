@@ -123,7 +123,8 @@ char* matrixCmd(char *cmd, char **param) {
 
     // brightness n - set up brightness of dislpay
     else if(strcmp(cmd, "brightness")==0) { int b=toInt(cmdParam(param)); displayBrightness(b); return EMPTY; }
-    
+    else if(strcmp(cmd, "rotation")==0) { int b=toInt(cmdParam(param)); return displayRotation(b); }
+
     //drawColor r g b - calculate 444 color and set as default color    
     // default color for all draw-commands (use by draw command if no or -1 is given as color)
     else if(strcmp(cmd, "drawColor")==0) { uint16_t col=toColor444(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)));drawColor(col); sprintf(buffer,"%d",col); return buffer; }
@@ -177,17 +178,10 @@ char* matrixCmd(char *cmd, char **param) {
     // drawText x y c size text - draw text at x y with size 
     else if(strcmp(cmd, "drawText")==0) { drawText(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),cmdParam(param),toInt(cmdParam(param))); return EMPTY; }
 
-    else if(strcmp(cmd, "pageOff")==0) { *matrixPageTime=2; matrixPage=0;  return EMPTY; }
-    // pageTitle - draw title page - matrixCOS title
-    else if(strcmp(cmd, "pageTitle")==0) { *matrixPageTime=0; matrixPage=1;  return EMPTY; }
-    // pageEsp - draw esp page - show esp informations 
-    else if(strcmp(cmd, "pageEsp")==0) { *matrixPageTime=0; matrixPage=2;  return EMPTY; }
-    // pageTest - draw test page - simple dislpay test
-    else if(strcmp(cmd, "pageTest")==0) { *matrixPageTime=0; matrixPage=3; return EMPTY; }
-    // pageTime - draw time page - 
-    else if(strcmp(cmd, "pageTime")==0) { *matrixPageTime=0; matrixPage=4; return EMPTY; }
-    // page Image
-    else if(strcmp(cmd, "pageImage")==0) { *matrixPageTime=0; matrixPage=5; return EMPTY; }
+    // set page
+    else if(strcmp(cmd, "page")==0) { *matrixPageTime=0; int p=toInt(cmdParam(param)); if(p>=0) { matrixPage=p; } sprintf(buffer,"%d",matrixPage);  return buffer; }
+    // next page
+    else if(strcmp(cmd, "pagePriv")==0) { *matrixPageTime=0; matrixPage--; if(matrixPage<1) { matrixPage=6; } return EMPTY; }
     // next page
     else if(strcmp(cmd, "pageNext")==0) { *matrixPageTime=0; matrixPage++; if(matrixPage>6) { matrixPage=1; } return EMPTY; }
 
