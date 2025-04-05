@@ -6,7 +6,7 @@
 #include <sys/time.h>     // time
 
 /* cmdOS from openON.org develop by mk@almi.de */
-const char *cmdOS="V.0.2.1-SNAPSHOT";
+const char *cmdOS="V.0.2.3";
 char *APP_NAME_PREFIX="CmdOs";
 
 String appIP="";
@@ -1043,7 +1043,7 @@ char* ledSwitch(char *c,char *c2) { return EMPTY; }
 #if swEnable
 //int _sw_time_base=100; // time base of sw in ms
 
-using ButtonEvent = void (*)(byte shortCount,unsigned long longTime); //type aliasing //C++ version of: typedef void (*InputEvent)(const char*)
+//using ButtonEvent = void (*)(byte shortCount,unsigned long longTime); //type aliasing //C++ version of: typedef void (*InputEvent)(const char*)
 unsigned long *switchTime = new unsigned long(0); // sw timer
 
 
@@ -1054,17 +1054,17 @@ unsigned long *switchTime = new unsigned long(0); // sw timer
 class Switch { 
   
 private:
+  byte _swGpio;
+  boolean _swOn=true;
   
   byte swLast=false; // last switch on/off 
   byte swShortCount=0;  // number of short-press count
   unsigned long swLastTime=0; // last change
   byte swTickCount=0;
-  ButtonEvent _onPress=NULL;
+  //ButtonEvent _onPress=NULL;
   List cmdList; // 0=onDown,1..9=on n click,10=on Long
   
 public:
-  byte _swGpio;
-  boolean _swOn=true;
 
   char* setCmd(int nr,char *cmd) {
     if(nr>11) { return EMPTY; }
@@ -1106,7 +1106,6 @@ public:
     
   void loop() {
     byte swNow=digitalRead(_swGpio);
-//sprintf(buffer,"sw pin:%d on:%d swShortCount:%d",swGpio,swNow,swShortCount); logPrintln(LOG_DEBUG,buffer);       
     if(swNow!=swLast) { // change
       if(swNow==_swOn) {  // change=>on
         if(swShortCount==0 && swTickCount==0) { swFirstDown(); }
@@ -1138,40 +1137,37 @@ public:
 };
 
 Switch* sw=NULL;
-
 unsigned long *switchStartup = new unsigned long(1); // sw timer
 
 void swSetup() {
   if(!swEnable) { return ; }
-//  sw=new Switch(swGpio,swOnTrue);
+  sw=new Switch(swGpio,swOnTrue); 
 }
 
 char* swInit(int pin,boolean on,boolean pullUp,int sw_time_base) {
-  if(pin!=-1) { swGpio=pin; swOnTrue=on; swTimeBase=sw_time_base; swPullUp=pullUp; swSetup(); }
+  if(pin!=-1) { 
+    swGpio=pin; swOnTrue=on; swTimeBase=sw_time_base; swPullUp=pullUp; ;
+    swSetup(); 
+  }
   sprintf(buffer,"sw pin:%d on:%d sw_time_base:%d swPullUp:%d",swGpio,swOnTrue,sw_time_base,swPullUp); return buffer;
 }
 
 char* swCmd(int i,char *cmd) {
-  if(!swEnable || sw==NULL) { return EMPTY; } 
+  if(sw==NULL) { return EMPTY; } 
   return sw->setCmd(i,cmd);
 }
 
 void swLoop() {
   if(!swEnable) { return ; }
-  else if(isTimer(switchStartup, 10*1000)) { 
-    sw=new Switch(swGpio,swOnTrue);
-    *switchStartup=2;
-  } 
-  else if(sw!=NULL && isTimer(switchTime, swTimeBase)) { 
-    sw->loop(); } // every 100ms
+  else if(sw!=NULL && isTimer(switchTime, swTimeBase)) { sw->loop(); } // every 100ms
 }
 
 #else
 void swSetup() {}
 void swLoop() {}
-char* swInit(int pin,boolean on) { return EMPTY; }
 char* swCmd(int i,char *cmd) { return EMPTY; }
 char* swInit(int pin,boolean on,boolean pullUp,int sw_time_base) { return EMPTY; }
+
 #endif
 
 /*
@@ -1291,6 +1287,7 @@ void eeInit() {
 /** e setup */
 void eeSetup() {
 //TODO show restart reason
+  if(MODE_DEFAULT==EE_MODE_FIRST) { bootClear(); } // is INIT => reset ALL
   eeRead();
 
   if(strcmp(eeType,bootType)!=0) {  // type wrong
@@ -1335,7 +1332,7 @@ void eeSetup() {
 }
 
 unsigned long *eeTime = new unsigned long(1);
-int okWait=120000; // wait 30s before WIFI => OK or SETUP => AP => WIFI 
+int okWait=60000; // wait 2min before WIFI => OK or SETUP => AP => WIFI 
 
 void eeLoop() {
 }
@@ -1878,6 +1875,8 @@ void wifiValidate() {
       logPrintln(LOG_DEBUG,"WIFI ok => EE_MODE_OK");
       setMode(EE_MODE_OK); 
     }else { 
+//      logPrintln(LOG_ERROR,"NO WIFI => switch to SETUP");
+//      eeMode=EE_MODE_SETUP; wifiSetup();
       logPrintln(LOG_ERROR,"NO WIFI => switch to AP");
       eeMode=EE_MODE_AP; wifiSetup();
     }
@@ -1970,6 +1969,8 @@ void otaSetup() {
 
   if(is(eeBoot.espName)) { ArduinoOTA.setHostname(eeBoot.espName); }
   if(is(eeBoot.espPas)) { ArduinoOTA.setPassword(eeBoot.espPas);}
+  else { ArduinoOTA.setPassword(user_admin); }
+  
 
   logPrintln(LOG_DEBUG,"ota start");
   ArduinoOTA.begin();
@@ -2472,7 +2473,7 @@ void webFileManager(AsyncWebServerRequest *request) {
     if (!index) {
       logPrintln(LOG_SYSTEM,"Update");
       content_len = request->contentLength();
-      int cmd = (filename.indexOf("spiffs") > -1) ? FILESYSTEM : U_FLASH;  // if filename includes spiffs, update the spiffs partition
+      int cmd = (filename.indexOf("spiffs") > -1) ? U_SPIFFS  : U_FLASH;  // if filename includes spiffs, update the spiffs partition
   #ifdef ESP8266
       Update.runAsync(true);
       if (!Update.begin(content_len, cmd)) {
@@ -3446,7 +3447,7 @@ void cmdOSSetup() {
   }
   eeSetup();
   ledSetup();  
-//  swSetup(); 
+  swSetup(); 
   bootSetup();
   
   fsSetup();
@@ -3460,8 +3461,6 @@ void cmdOSSetup() {
     mqttSetup();  
     timeSteup();  
   }
-
-  swSetup(); 
 }
 
 void cmdOSLoop() {
@@ -3484,6 +3483,10 @@ void cmdOSLoop() {
   }
   delay(0);
 }
+
+
+
+
 
 
 
