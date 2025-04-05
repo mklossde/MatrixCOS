@@ -20,11 +20,12 @@ See <a href='../3d/rdprint.md'>3D Print Modell</a>
 
 ## Installtion
 
-Easy was to install the bin via <a href='https://web.esphome.io/'>esp-web-tools</a>
+Easy way to install the bin via <a href='https://web.esphome.io/'>esp-web-tools</a>
 or <a href="https://espressif.github.io/esptool-js/">https://espressif.github.io/esptool-js/</a>
 or <a href="https://esp.huhn.me/">https://esp.huhn.me/</a>
 - Connect to ESP
 - Install (seclect <a href='../bin/'>MatrixCOS firmware</a> from bin directory)
+- select 0x0
 
 ## CmdOS Config 
 
