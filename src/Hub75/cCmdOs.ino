@@ -6,9 +6,9 @@
 #include <sys/time.h>     // time
 
 /* cmdOS from openON.org develop by mk@almi.de */
-const char *cmdOS="V.0.2.3";
+const char *cmdOS="V.0.2.5";
 char *APP_NAME_PREFIX="CmdOs";
-
+ 
 String appIP="";
 #define MAX_DONWLOAD_SIZE 10000
 
@@ -91,7 +91,7 @@ static String EMPTYSTRING="";
 int minValueLen=11;
 
 /* list of object and map of key=value */
-class List {
+class MapList {
 private:
   int _index=0; int _max=0;
   void** _array=NULL; // contains values 
@@ -198,14 +198,14 @@ public:
 
   /* size of list e.g. int size=list.size(); */
   int size() { return _index; }
-  List(int max) {  grow(max); }
-  List() {   }
-  List(boolean isMap) {  _isMap=isMap;  } // enable as map
-  ~List() { delete _array; if(_isMap) { delete _key; } }
+  MapList(int max) {  grow(max); }
+  MapList() {   }
+  MapList(boolean isMap) {  _isMap=isMap;  } // enable as map
+  ~MapList() { delete _array; if(_isMap) { delete _key; } }
 
 };
 
-List attrMap(true); 
+MapList attrMap(true); 
 
 //-----------------------------------------------------------------------------
 
@@ -456,12 +456,13 @@ boolean ntpRunning=false;           // is ntpServer running
     nextTime=2 => OFF
     nextTime=0 => off, nextTime=executeTime
  period= next period in ms
+    period=-1 (one time, but off after)
  e.g.
     unsigned long *wifiTime = new unsigned long(0);
     if (isTimer(wifiTime, 1000)) {....}
 */
 boolean isTimer(unsigned long *lastTime, unsigned long period) {
-  if(*lastTime==2) { return false; } // lastTime=2 => OFF
+  if(*lastTime==2 ) { return false; } // lastTime=2 => OFF
   else if(*lastTime==0) {  // do now
     *lastTime=_timeMs; // 0= start now
     if(*lastTime>=0 && *lastTime<2) { *lastTime=3; }
@@ -470,7 +471,7 @@ boolean isTimer(unsigned long *lastTime, unsigned long period) {
     *lastTime=_timeMs; // 1= start next period
     if(*lastTime>=0 && *lastTime<2) { *lastTime=3; }
     return false;  
-  }else if (_timeMs >= *lastTime+period) {  // next period found
+  }else if (period!=-1 && _timeMs >= *lastTime+period) {  // next period found
     *lastTime = _timeMs; 
       if(*lastTime>=0 && *lastTime<2) { *lastTime=3; }
     return true;
@@ -514,7 +515,7 @@ char* timeInfo() {
 //  e.g. EventTimer *myTimer=new EventTimer(10000,2000,&info); myTimer->start();  // after 10s excute info() and repeat every 2s
 //
 
-List eventList;
+MapList eventList;
 
 class MyEventTimer {
   private:
@@ -935,104 +936,150 @@ void fsSetup() {
 //-------------------------------------------------------------------------------------------------------------------
 // LED
 
-// BOOT SWITCH: BOOT=>BLINK 2x=>PRESS 2s=>WIFI_AP / 5s=>clear 
+// BOOT SWITCH: BOOT=>BLINK 2x=>PRESS 2s=>WIFI_AP / 5s=>clear
 
 #if ledEnable
-int ledPatternFlashSlow[]={5,500,0}; // 1 Flash slow => Wifi SP mode
-int ledPattern2Flash[]={5,10,5,500,0}; // 2 Flash slow => Wifi CL connectiong
-int ledPatternBlink1[]={10,1,0}; // 
+int ledPatternFlashSlow[] = { 5, 500, 0 };      // 1 Flash slow => Wifi SP mode
+int ledPattern2Flash[] = { 5, 10, 5, 500, 0 };  // 2 Flash slow => Wifi CL connectiong
+int ledPatternBlink1[] = { 10, 1, 0 };          //
 
-unsigned long *ledTime = new unsigned long(0); // led timer
-boolean ledBlinkOn=false; // is blink on
-boolean ledOn=false; // is led on
-int (*ledPattern)[];  // led blink pattern
-int ledTicks=0;
-byte ledCount=5;
-byte ledIndex=0;
+unsigned long *ledTime = new unsigned long(0);  // led timer
+boolean ledBlinkOn = false;                     // is blink on
+boolean ledOn = false;                          // is led on
+int (*ledPattern)[];                            // led blink pattern
+int ledTicks = 0;
+byte ledCount = 5;
+byte ledIndex = 0;
 
 // direct blink blinkSpeed in ms - just for test/debug/error
 void ledBlink(byte times, int blinkSpeed) {
-  if(times*blinkSpeed>10000) { return ; } // ignore delay >10s
-  if(ledEnable) {
-    for(int i=0;i<times;i++) {     
-      digitalWrite(ledGpio, ledOnTrue); delay(blinkSpeed); digitalWrite(ledGpio, !ledOnTrue); delay(blinkSpeed); ledOn=!ledOnTrue;             
+  if (times * blinkSpeed > 10000) { return; }  // ignore delay >10s
+  if (ledEnable) {
+    for (int i = 0; i < times; i++) {
+      digitalWrite(ledGpio, ledOnTrue);
+      delay(blinkSpeed);
+      digitalWrite(ledGpio, !ledOnTrue);
+      delay(blinkSpeed);
+      ledOn = !ledOnTrue;
     }
   }
 }
-void ledSet(boolean on) { digitalWrite(ledGpio, on); ledOn=on; }
+void ledSet(boolean on) {
+  digitalWrite(ledGpio, on);
+  ledOn = on;
+}
 
 void ledOff() {
-  if(ledEnable) { digitalWrite(ledGpio, !ledOnTrue); ledOn=!ledOnTrue; }
-  ledBlinkOn=false; 
+  if (ledEnable) {
+    digitalWrite(ledGpio, !ledOnTrue);
+    ledOn = !ledOnTrue;
+  }
+  ledBlinkOn = false;
 }
 
 //-----
 
-// show actual led blink 
+// show actual led blink
 void ledShow() {
-    if(ledEnable) {
-      if(ledOn) { digitalWrite(ledGpio,ledOnTrue); }else {  digitalWrite(ledGpio,!ledOnTrue); }     
+  if (ledEnable) {
+    if (ledOn) {
+      digitalWrite(ledGpio, ledOnTrue);
+    } else {
+      digitalWrite(ledGpio, !ledOnTrue);
     }
+  }
 }
 
-// blink with pattern, max times (0=unlimited) 
-void ledBlinkPattern(byte max,int (*blinkPattern)[]) { 
-  ledPattern=blinkPattern; ledCount=max; ledTicks=0; ledIndex=0; ledBlinkOn=true; ledOn=true; ledShow();
-//  sprintf(buffer,"LED blink %d index:%d time:%d count:%d",ledGpio,ledIndex,(*ledPattern)[ledIndex],ledCount); logPrintln(buffer);
+// blink with pattern, max times (0=unlimited)
+void ledBlinkPattern(byte max, int (*blinkPattern)[]) {
+  ledPattern = blinkPattern;
+  ledCount = max;
+  ledTicks = 0;
+  ledIndex = 0;
+  ledBlinkOn = true;
+  ledOn = true;
+  ledShow();
+  //  sprintf(buffer,"LED blink %d index:%d time:%d count:%d",ledGpio,ledIndex,(*ledPattern)[ledIndex],ledCount); logPrintln(buffer);
 }
 
 //--------------------------
 
 void ledSetup() {
-  if(!ledEnable) { return ; }
-  pinMode(ledGpio, OUTPUT);  
-  sprintf(buffer,"LED setup gpio:%d on:%d",ledGpio,ledOnTrue); logPrintln(LOG_INFO,buffer);
+  if (!ledEnable) { return; }
+  pinMode(ledGpio, OUTPUT);
+  sprintf(buffer, "LED setup gpio:%d on:%d", ledGpio, ledOnTrue);
+  logPrintln(LOG_INFO, buffer);
 }
 
-void ledLoop() {  
-  if(!ledEnable) { return ; }
-  if(!ledBlinkOn || !isTimer(ledTime, 10)) { return; } // every 10ms
+void ledLoop() {
+  if (!ledEnable) { return; }
+  if (!ledBlinkOn || !isTimer(ledTime, 10)) { return; }  // every 10ms
 
-  if(!ledBlinkOn || (*ledPattern)[0]==0) { return ; }
+  if (!ledBlinkOn || (*ledPattern)[0] == 0) { return; }
   ledTicks++;
-  if(ledTicks>(*ledPattern)[ledIndex]) {
-    ledOn=!ledOn; 
-    ledTicks=0; 
-    ledIndex++; 
-    if((*ledPattern)[ledIndex]==0) { 
-      ledIndex=0; 
-      if(ledCount>0) { 
-        ledCount--; if(ledCount==0) {  ledBlinkOn=false; ledOn=false; }
-      }        
+  if (ledTicks > (*ledPattern)[ledIndex]) {
+    ledOn = !ledOn;
+    ledTicks = 0;
+    ledIndex++;
+    if ((*ledPattern)[ledIndex] == 0) {
+      ledIndex = 0;
+      if (ledCount > 0) {
+        ledCount--;
+        if (ledCount == 0) {
+          ledBlinkOn = false;
+          ledOn = false;
+        }
+      }
     }
-    ledShow();      
+    ledShow();
   }
-}  
-
-
-char* ledInit(int pin,boolean on) {
-  if(pin!=-1) { ledGpio=pin; ledOnTrue=on; ledSetup(); }
-  sprintf(buffer,"led pin:%d on:%d",ledGpio,ledOnTrue); return buffer;
 }
 
-char* ledSwitch(char *c,char *c2) {
-  if(isBoolean(c)) { boolean b=toBoolean(c); ledSet(b); sprintf(buffer,"%d",b); return buffer; }
-  // ledBlink time speed 
-  else if(isInt(c)) { int b=toInt(c); int b2=toInt(c2); ledBlink(b,b2); sprintf(buffer,"%d %d",b,b2); return buffer; } 
-  else { return EMPTY; }
+
+char *ledInit(int pin, boolean on) {
+  if (pin != -1) {
+    ledGpio = pin;
+    ledOnTrue = on;
+    ledSetup();
+  }
+  sprintf(buffer, "led pin:%d on:%d", ledGpio, ledOnTrue);
+  return buffer;
+}
+
+char *ledSwitch(char *c, char *c2) {
+  if (isBoolean(c)) {
+    boolean b = toBoolean(c);
+    ledSet(b);
+    sprintf(buffer, "%d", b);
+    return buffer;
+  }
+  // ledBlink time speed
+  else if (isInt(c)) {
+    int b = toInt(c);
+    int b2 = toInt(c2);
+    ledBlink(b, b2);
+    sprintf(buffer, "%d %d", b, b2);
+    return buffer;
+  } else {
+    return EMPTY;
+  }
 }
 
 #else
 
 void ledBlink(byte times, int blinkSpeed) {}
-void ledBlinkPattern(byte max,int (*blinkPattern)[]) {}
+void ledBlinkPattern(byte max, int (*blinkPattern)[]) {}
 void ledOff() {}
 
 void ledSetup() {}
 void ledLoop() {}
 
-char* ledInit(int pin,boolean on) { return EMPTY; }
-char* ledSwitch(char *c,char *c2) { return EMPTY; }
+char* ledInit(int pin, boolean on) {
+  return EMPTY;
+}
+char* ledSwitch(char* c, char* c2) {
+  return EMPTY;
+}
 
 #endif
 
@@ -1043,130 +1090,225 @@ char* ledSwitch(char *c,char *c2) { return EMPTY; }
 #if swEnable
 //int _sw_time_base=100; // time base of sw in ms
 
+#define swTickMax 254  // too long press 255*100 => 25.5s
+
 //using ButtonEvent = void (*)(byte shortCount,unsigned long longTime); //type aliasing //C++ version of: typedef void (*InputEvent)(const char*)
-unsigned long *switchTime = new unsigned long(0); // sw timer
+unsigned long *switchTime = new unsigned long(0);  // sw timer
 
+class Switch {
 
-#define  swTickShort 4 // 5*100 => 500ms;
-#define swTickLong 5 // 10*100 => 1s;
-#define swTickMax 255 // too long press 255*100 => 25.5s 
-
-class Switch { 
-  
 private:
   byte _swGpio;
-  boolean _swOn=true;
-  
-  byte swLast=false; // last switch on/off 
-  byte swShortCount=0;  // number of short-press count
-  unsigned long swLastTime=0; // last change
-  byte swTickCount=0;
+  byte _swOn = 1;
+  byte _swMode = 0;
+
+  byte swLast = false;           // last switch on/off
+  byte swShortCount = 0;         // number of short-press count
+  unsigned long swLastTime = 0;  // last change
+  byte swTickCount = 0;
   //ButtonEvent _onPress=NULL;
-  List cmdList; // 0=onDown,1..9=on n click,10=on Long
-  
+  MapList cmdList;  // 0=onDown,1..9=on n click,10=on Long
+
 public:
 
-  char* setCmd(int nr,char *cmd) {
-    if(nr>11) { return EMPTY; }
-    else if(nr<0) {
-      sprintf(buffer,"");
-      for(int i=0;i<cmdList.size();i++) {  
-        char *value=(char*)cmdList.get(i);
-        if(is(value)) {
-          sprintf(buffer+strlen(buffer),"swCmd %d \"%s\"\n",i,value);
+  char *setCmd(int nr, char *cmd) {
+    if (nr > 11) {
+      return EMPTY;
+    } else if (nr < 0) {
+      sprintf(buffer, "");
+      for (int i = 0; i < cmdList.size(); i++) {
+        char *value = (char *)cmdList.get(i);
+        if (is(value)) {
+          sprintf(buffer + strlen(buffer), "swCmd %d \"%s\"\n", i, value);
         }
       }
       return buffer;
-    }else if(!is(cmd)) { char *cmd=(char*)cmdList.get(nr); sprintf(buffer,"swCmd nr:%d cmd:%s",nr,to(cmd)); return buffer;}    
-    else if(size(cmd)<2) { cmdList.del(nr); sprintf(buffer,"swCmd del nr:%d",nr); return buffer; }
-    else { cmdList.addIndex(nr,copy(cmd)); sprintf(buffer,"swCmd set nr:%d cmd:%s",nr,to(cmd)); return buffer;}
-  }
-
-  // sw press short times and  long time in ms (e.g. s_s_l => 2,600ms,2)  
-  void swPress(byte shortCount,unsigned long longTime) {
-    sprintf(buffer,"SW press short:%d long:%dms",shortCount,longTime); logPrintln(LOG_DEBUG,buffer); 
-    if(longTime==0) {
-      char *cmd=(char*)cmdList.get(shortCount); if(is(cmd)) { char *c=copy(cmd); cmdLine(c); delete[] c; }
-    }else {
-      char *cmd=(char*)cmdList.get(10); if(is(cmd)) { char *c=copy(cmd); cmdLine(c); delete[] c; }
+    } else if (!is(cmd)) {
+      char *cmd = (char *)cmdList.get(nr);
+      sprintf(buffer, "swCmd nr:%d cmd:%s", nr, to(cmd));
+      return buffer;
+    } else if (size(cmd) < 2) {
+      cmdList.del(nr);
+      sprintf(buffer, "swCmd del nr:%d", nr);
+      return buffer;
+    } else {
+      cmdList.addIndex(nr, copy(cmd));
+      sprintf(buffer, "swCmd set nr:%d cmd:%s", nr, to(cmd));
+      return buffer;
     }
   }
-  
-  // sw first (immediately) 
-  void swFirstDown() {
-//    sprintf(buffer,"SW DOWN"); logPrintln(LOG_DEBUG,buffer);     
-    char *cmd=(char*)cmdList.get(0); if(is(cmd)) {char *c=copy(cmd); cmdLine(c); delete[] c; } // cmdLine / cmdPrg
+
+  // sw press short times and  long time in ms (e.g. s_s_l => 2,600ms,2)
+  void swPress(byte shortCount, unsigned long longTime) {
+    sprintf(buffer, "SW press short:%d long:%dms", shortCount, longTime);
+    logPrintln(LOG_DEBUG, buffer);
+    if (longTime == 0) {
+      char *cmd = (char *)cmdList.get(shortCount);
+      if (is(cmd)) {
+        char *c = copy(cmd);
+        cmdLine(c);
+        delete[] c;
+      }
+    } else {
+      char *cmd = (char *)cmdList.get(10);
+      if (is(cmd)) {
+        char *c = copy(cmd);
+        cmdLine(c);
+        delete[] c;
+      }
+    }
+  }
+
+  // sw first (immediately)
+  void swFirstDown(byte swNow) {
+    sprintf(buffer, "SW DOWN %d", swNow);
+    logPrintln(LOG_DEBUG, buffer);
+    char *cmd = (char *)cmdList.get(0);
+    if (is(cmd)) {
+      char *c = copy(cmd);
+      cmdLine(c);
+      delete[] c;
+    }  // cmdLine / cmdPrg
   }
 
 public:
   // read button
-  byte swRead() { return digitalRead(_swGpio); }
-  // is button press
-  boolean isOn() { return digitalRead(_swGpio)==_swOn; }
-    
-  void loop() {
-    byte swNow=digitalRead(_swGpio);
-    if(swNow!=swLast) { // change
-      if(swNow==_swOn) {  // change=>on
-        if(swShortCount==0 && swTickCount==0) { swFirstDown(); }
-        swShortCount++;
-        swTickCount=1;
-      }else if(swNow!=_swOn) { // change => off 
-        if(swTickCount>=swTickLong) { swPress(swShortCount,swTickCount); swShortCount=0;swTickCount=0; } // relase => long press     
-        else { swTickCount=1; }
-      }
-    }else if(swNow==_swOn && swShortCount>0) { // press
-      swTickCount++;      
-    }else if(swNow!=_swOn) { // not-pressed / released
-      if(swShortCount>0) { 
-        swTickCount++; 
-        if(swTickCount>swTickShort) { swPress(swShortCount,0); swShortCount=0;swTickCount=0; } // not new press => short press 
-      }      
+  byte swRead() {
+    if (_swMode == SW_MODE_TOUCH) {
+      return touchRead(_swGpio);
+    } else {
+      return digitalRead(_swGpio);
     }
-    
-    swLast=swNow;
-    if(swTickCount>=swTickMax) { swShortCount=0; swTickCount=0; } // max time => reset     
   }
-  
-  Switch(int gpio,boolean swOn) { 
-    _swGpio=swGpio; _swOn=swOn; swLast=!swOn;
-    if(swPullUp) { pinMode(_swGpio, INPUT_PULLUP); } // input with interal pullup ( _swGpio=GND (false) => pressed) 
+  // is button press
+  boolean isOn() {
+    return isOn(swRead());
+  }
+  boolean isOn(byte swNow) {
+    if (_swOn < 2) {
+      return swNow == _swOn;
+    } else {
+      return swNow < _swOn;
+    }
+  }
+
+  void loop() {
+    byte swNow = swRead();
+    boolean isNowOn = isOn(swNow);
+
+    if (isNowOn != swLast) {  // change
+      if (isNowOn) {          // change=>on
+        if (swShortCount == 0 && swTickCount == 0) { swFirstDown(swNow); }
+        swTickCount = 1;                  // start on tick
+        swShortCount++;                   // inc press
+      } else {                            // change => off
+        if (swTickCount >= swTickLong) {  // off => last on-swTickCount >swTickLong
+          swPress(swShortCount, swTickCount);
+          swShortCount = 0;
+          swTickCount = 0;  // relase => long press
+        } else {
+          swTickCount = 1;  // start off tick
+        }
+      }
+
+      swLast = isNowOn;
+    } else if (isNowOn && swShortCount > 0) {   // on is hold
+      swTickCount++;                            // count on tick
+    } else if (!isNowOn && swShortCount > 0) {  // is off hold
+      swTickCount++;                            // count off tick
+      if (swTickCount > swTickShort) {
+        swPress(swShortCount, 0);
+        swShortCount = 0;
+        swTickCount = 0;
+      }  // no new press => short press
+    }
+
+    if (swTickCount >= swTickMax) {        // max on/off  => reset
+      swPress(swShortCount, swTickCount);  // max => long press
+      swShortCount = 0;
+      swTickCount = 0;
+    }
+  }
+
+  char *swInfo() {
+    sprintf(buffer, "SW %d gpio:%d on:%d swMode:%d - swTimeBase:%d swTickShort:%d swTickLong:%d", swRead(), _swGpio, _swOn, _swMode,
+            swTimeBase, swTickShort, swTickLong);
+    return buffer; 
+  }
+
+  Switch(int gpio, byte swOn, byte swMode) {
+    _swGpio = swGpio;
+    _swOn = swOn;
+    _swMode = swMode;
+    swLast = !swOn;
+    if (_swMode == SW_MODE_TOUCH) {
+    }                                                                        //
+    else if (_swMode == SW_MODE_PULLUP) { pinMode(_swGpio, INPUT_PULLUP); }  // input with interal pullup ( _swGpio=GND (false) => pressed)
+    else if (_swMode == SW_MODE_PULLDOWN) {
+      pinMode(_swGpio, INPUT_PULLDOWN);
+    }  // input with interal pulldown
     else { pinMode(_swGpio, INPUT); }
-    sprintf(buffer,"SW setup gpio:%d on:%d swTimeBase:%d pullUp:%d",_swGpio,_swOn,swTimeBase,swPullUp); logPrintln(LOG_INFO,buffer);
-  }  
+    if (_swOn == 2) {
+      byte swNow = swRead();
+      if (swNow == 0) {
+        _swOn = 1;
+      } else if (swNow == 2) {
+        _swOn = 0;
+      } else {
+        _swOn = swNow;
+      }
+    }  // swOn==2 => use actual as !on
+    else if (_swOn > 2 && _swOn < 10) { _swOn = swRead() - _swOn; }
+    logPrintln(LOG_INFO, swInfo());
+  }
 };
 
-Switch* sw=NULL;
-unsigned long *switchStartup = new unsigned long(1); // sw timer
+Switch *sw = NULL;
+unsigned long *switchStartup = new unsigned long(1);  // sw timer
 
 void swSetup() {
-  if(!swEnable) { return ; }
-  sw=new Switch(swGpio,swOnTrue); 
+  if (!swEnable) { return; }
+  sw = new Switch(swGpio, swOn, swMode);
 }
 
-char* swInit(int pin,boolean on,boolean pullUp,int sw_time_base) {
-  if(pin!=-1) { 
-    swGpio=pin; swOnTrue=on; swTimeBase=sw_time_base; swPullUp=pullUp; ;
-    swSetup(); 
+// swInit 32 3 3 100 4 5
+char *swInit(int pin, int on, byte mode, int timeBase, byte tickShort, byte tickLong) {
+  if (pin != -1) {
+    swGpio = pin;
+    swOn = on;
+    swMode = swMode;
+    swTimeBase = timeBase;
+    swTickShort = tickShort;
+    swTickLong = tickLong;
+    swSetup();
+    return EMPTY;
+  } else {
+    return sw->swInfo();
   }
-  sprintf(buffer,"sw pin:%d on:%d sw_time_base:%d swPullUp:%d",swGpio,swOnTrue,sw_time_base,swPullUp); return buffer;
 }
 
-char* swCmd(int i,char *cmd) {
-  if(sw==NULL) { return EMPTY; } 
-  return sw->setCmd(i,cmd);
+char *swCmd(int i, char *cmd) {
+  if (sw == NULL) { return EMPTY; }
+  return sw->setCmd(i, cmd);
 }
 
 void swLoop() {
-  if(!swEnable) { return ; }
-  else if(sw!=NULL && isTimer(switchTime, swTimeBase)) { sw->loop(); } // every 100ms
+  if (!swEnable) {
+    return;
+  } else if (sw != NULL && isTimer(switchTime, swTimeBase)) {
+    sw->loop();
+  }  // every 100ms
 }
 
 #else
 void swSetup() {}
 void swLoop() {}
-char* swCmd(int i,char *cmd) { return EMPTY; }
-char* swInit(int pin,boolean on,boolean pullUp,int sw_time_base) { return EMPTY; }
+char* swCmd(int i, char* cmd) {
+  return EMPTY;
+}
+char* swInit(int pin, boolean on, byte mode, int timeBase, byte tickShort, byte tickLong) {
+  return EMPTY;
+}
 
 #endif
 
@@ -1269,18 +1411,21 @@ void setMode(byte mode) {
   eeMode=mode;
 }
 
+/* set default values */
+void eeDefault() {
+  uint32_t chipid=espChipId(); // or use WiFi.macAddress() ?
+  if(!is(eeBoot.espName) || MODE_DEFAULT==EE_MODE_PRIVAT) { snprintf(eeBoot.espName,20, "OpenOs%08X",chipid);  }
+  if((!is(eeBoot.espPas) || MODE_DEFAULT==EE_MODE_PRIVAT)) { sprintf(eeBoot.espPas,user_pas); }     // my private esp password   
+  if(!is(eeBoot.wifi_ssid) || MODE_DEFAULT==EE_MODE_PRIVAT) {sprintf(eeBoot.wifi_ssid,wifi_ssid_default); } // my privat WIFI SSID of AccessPoint
+  if(!is(eeBoot.wifi_pas) || MODE_DEFAULT==EE_MODE_PRIVAT) {sprintf(eeBoot.wifi_pas,wifi_pas_default); } // my privat WIFI SSID of AccessPoint
+  if(!is(eeBoot.mqtt) || MODE_DEFAULT==EE_MODE_PRIVAT) {sprintf(eeBoot.mqtt,mqtt_default); }           // my privat MQTT server
+}
+
 /* on first start prg */
 void eeInit() {
   if(serialEnable) { Serial.println("### INIT");}
   eeMode=EE_MODE_SETUP; 
-
-  uint32_t chipid=espChipId(); // or use WiFi.macAddress() ?
-  if(!is(eeBoot.espName)) { snprintf(eeBoot.espName,20, "OpenOs%08X",chipid);  }
-  if(!is(eeBoot.espPas)) { sprintf(eeBoot.espPas,user_pas); }     // my private esp password   
-  if(!is(eeBoot.wifi_ssid)) {sprintf(eeBoot.wifi_ssid,wifi_ssid_default); } // my privat WIFI SSID of AccessPoint
-  if(!is(eeBoot.wifi_pas)) {sprintf(eeBoot.wifi_ssid,wifi_pas_default); } // my privat WIFI SSID of AccessPoint
-  if(!is(eeBoot.mqtt)) {sprintf(eeBoot.mqtt,mqtt_default); }           // my privat MQTT server
-
+  eeDefault();
   eeSave();
 }
 
@@ -1288,6 +1433,8 @@ void eeInit() {
 void eeSetup() {
 //TODO show restart reason
   if(MODE_DEFAULT==EE_MODE_FIRST) { bootClear(); } // is INIT => reset ALL
+  else if(MODE_DEFAULT==EE_MODE_PRIVAT) {  if(serialEnable) { Serial.println("### MODE PRIVAT"); } eeDefault(); eeMode=EE_MODE_WIFI_TRY; return; }
+
   eeRead();
 
   if(strcmp(eeType,bootType)!=0) {  // type wrong
@@ -1403,14 +1550,6 @@ char* bootReset(char *p) {
   int i=toInt(p);
   if(i>1 && i==_bootRestVal) { bootClear(); return "reset done";} // do reset 
   else { _bootRestVal=random(2,99); sprintf(buffer,"%d",_bootRestVal); return buffer; } // without set new reset value
-}
-
-void bootPrivat() {
-  sprintf(eeBoot.wifi_ssid,wifi_ssid_default); // my privat WIFI SSID of AccessPoint
-  sprintf(eeBoot.wifi_pas,wifi_pas_default);   // my privat WIFI password of AccessPoint
-  sprintf(eeBoot.espPas,user_pas);   // my privat WIFI password of AccessPoint
-  sprintf(eeBoot.mqtt,mqtt_default);            // my privat MQTT server
-  eeMode=EE_MODE_PRIVAT; // set privat mode 
 }
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -1607,7 +1746,7 @@ void sleep(char* sleepMode,char *sleepTimeMS) {
   sprintf(buffer,"SLEEP %d %d",m,s);logPrintln(LOG_INFO,buffer);
   sleep(m,(long)s);
 }
-
+ 
 //-------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------
 
@@ -1633,13 +1772,12 @@ void sleep(char* sleepMode,char *sleepTimeMS) {
 #endif
 
 void bootSetup() {
-
-
-  // reset sw
-  bootRead();
-  bootSW();
-  if(MODE_DEFAULT==EE_MODE_PRIVAT) { bootPrivat(); } // is privat mode as default => use privat config
-
+  if(MODE_DEFAULT!=EE_MODE_PRIVAT) { 
+    // reset sw
+    bootRead();
+    bootSW();
+  }
+  
   sprintf(buffer,"BOOT init mode:%d espName:%s espBoard:%s wifi_ssid:%s timestamp:%d", eeMode,eeBoot.espName,eeBoot.espBoard,eeBoot.wifi_ssid,eeBoot.timestamp); logPrintln(LOG_INFO,buffer);
 }
 
@@ -1952,13 +2090,13 @@ void otaSetup() {
       String type;
       if (ArduinoOTA.getCommand() == U_FLASH) { type = "sketch"; }
       else {  type = "filesystem"; } // U_SPIFFS
-      FILESYSTEM.end();
+//      FILESYSTEM.end();
       logPrintln(LOG_INFO,"Start updating " + type);
     })
     .onEnd([]() { logPrintln(LOG_INFO,"End");})
-    .onProgress([](unsigned int progress, unsigned int total) { sprintf(buffer,"Progress: %u%%", (progress / (total / 100))); logPrintln(LOG_DEBUG,buffer); })
+    .onProgress([](unsigned int progress, unsigned int total) { sprintf(buffer,"Progress: %u%%", (progress / (total / 100))); logPrintln(LOG_INFO,buffer); })
     .onError([](ota_error_t error) {
-      Serial.printf("Error[%u]: ", error);
+      sprintf(buffer,"Error[%u]: ", error); logPrintln(LOG_ERROR,buffer);
       if (error == OTA_AUTH_ERROR) { logPrintln(LOG_INFO,"Auth Failed");
       } else if (error == OTA_BEGIN_ERROR) { logPrintln(LOG_INFO,"Begin Failed");
       } else if (error == OTA_CONNECT_ERROR) { logPrintln(LOG_INFO,"Connect Failed");
@@ -1968,11 +2106,9 @@ void otaSetup() {
     });
 
   if(is(eeBoot.espName)) { ArduinoOTA.setHostname(eeBoot.espName); }
-  if(is(eeBoot.espPas)) { ArduinoOTA.setPassword(eeBoot.espPas);}
-  else { ArduinoOTA.setPassword(user_admin); }
+  if(is(eeBoot.espPas)) { ArduinoOTA.setPassword(eeBoot.espPas); logPrintln(LOG_INFO,"OTA setup ESPPAS"); }
+  else { ArduinoOTA.setPassword("admin"); logPrintln(LOG_INFO,"OTA setup admin");  }
   
-
-  logPrintln(LOG_DEBUG,"ota start");
   ArduinoOTA.begin();
 }
 
@@ -2488,7 +2624,7 @@ void webFileManager(AsyncWebServerRequest *request) {
       Update.printError(Serial);
   #ifdef ESP8266
     } else {
-      sprintf(buffer, "Progress: %d%%\n", (Update.progress() * 100) / Update.size()); logPrintln(LOG_SYSTEM,buffer);
+      sprintf(buffer, "Progress: %d%%", (Update.progress() * 100) / Update.size()); logPrintln(LOG_SYSTEM,buffer);
   #endif
     }
 
@@ -2506,7 +2642,7 @@ void webFileManager(AsyncWebServerRequest *request) {
   }
 
   void webProgress(size_t prg, size_t sz) {
-    sprintf(buffer, "Progress: %d%%\n", (prg * 100) / content_len);
+    sprintf(buffer, "Progress: %d%%", (prg * 100) / content_len);
     logPrintln(LOG_SYSTEM,buffer);
   }
 
@@ -2935,9 +3071,9 @@ char* cmdExec(char *cmd, char **param) {
   else if(equals(cmd, "rest")) { ret=rest(cmdParam(param)); } // 
   else if(equals(cmd, "cmdRest")) { ret=cmdRest(cmdParam(param)); } // call http/rest and exute retur nbody as cmd
 
-  else if(equals(cmd, "ledInit") && isAccess(ACCESS_ADMIN)) { ret=ledInit(toInt(cmdParam(param)),toBoolean(cmdParam(param))); } //
+  else if(equals(cmd, "ledInit") && isAccess(ACCESS_ADMIN)) { ret=ledInit(toInt(cmdParam(param)),toBoolean(cmdParam(param))); } 
   else if(equals(cmd, "led") && isAccess(ACCESS_CHANGE)) { ret=ledSwitch(cmdParam(param),cmdParam(param)); }
-  else if(equals(cmd, "swInit") && isAccess(ACCESS_ADMIN)) { ret=swInit(toInt(cmdParam(param)),toBoolean(cmdParam(param)),toBoolean(cmdParam(param)),toInt(cmdParam(param))); } //
+  else if(equals(cmd, "swInit") && isAccess(ACCESS_ADMIN)) { ret=swInit(toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param)),toInt(cmdParam(param))); } //
   else if(equals(cmd, "swCmd") && isAccess(ACCESS_ADMIN)) { ret=swCmd(toInt(cmdParam(param)),cmdParam(param)); }
 
   // timer 1 0 -1 -1 -1 -1 -1 "drawLine 0 0 20 20 888"
@@ -3483,10 +3619,6 @@ void cmdOSLoop() {
   }
   delay(0);
 }
-
-
-
-
 
 
 

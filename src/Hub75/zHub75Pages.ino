@@ -1,26 +1,9 @@
 
-byte matrixPage=0; // 0=off,1=title
-unsigned long *matrixPageTime = new unsigned long(0);
-
-byte _effectType=0;
-
-int col_red;
-int col_white;
-int col_black;
-int col_green;
-int col_blue;
-
-/* clear from page */
-void pageClear() {
-  if(eeDisplay.displayBuffer) { display->fillRect(0,0,panelX,panelY,0); } 
-  else { displayClear(); }
-  _effectType=0; // effect off
-}
-
 void pageTitle() {
+  pageRefresh=5000;
   pageClear();
 
-  int wh=panelX/2, hh=panelY/2;
+  int wh=pixelX/2, hh=pixelY/2;
 
   // WIFI  
   long val=0; if(WiFi.RSSI()!=0) { val=(100+WiFi.RSSI())/2; }
@@ -44,13 +27,13 @@ void pageTitle() {
   x=wh-w/2, y=1;
   drawText(x,y,1,prgTitle,col_red);   
   // version
-  drawText(1,panelY-8,1,prgVersion,col_red);   
+  drawText(1,pixelY-8,1,prgVersion,col_red);   
   // FreeHeap
-  drawFull(panelX-5,25,8,20,2,(int)ESP.getFreeHeap(),150000,col_red,col_white);
+  drawFull(pixelX-5,25,8,20,2,(int)ESP.getFreeHeap(),150000,col_red,col_white);
 
   if(eeMode!=EE_MODE_OK) {
-    fillRect(panelX-13,panelY-9,panelX,panelY,col_red);
-    sprintf(buffer, "%d", eeMode); drawText(panelX-12,panelY-8,1,buffer,col_black);  
+    fillRect(pixelX-13,pixelY-9,pixelX,pixelY,col_red);
+    sprintf(buffer, "%d", eeMode); drawText(pixelX-12,pixelY-8,1,buffer,col_black);  
   }
 
   if(is(appIP)) {  
@@ -62,8 +45,9 @@ void pageTitle() {
 }
 
 void pageStart() {
+  pageRefresh=5000;
   pageClear();  
-  int wh=panelX/2, wy=panelY/2, hp=panelY/panelX, ii=0;
+  int wh=pixelX/2, wy=pixelY/2, hp=pixelY/pixelX, ii=0;
   int d=1000/wh;
   for(int i=0;i<wh;i++) {
     drawRect(wh-i,wy-ii,(i*2),(ii*2),col_white);
@@ -77,10 +61,10 @@ void pageStart() {
 /*
 void pageTest() {
   pageClear();
-  int wh=panelX/2, y=panelY/2, hp=panelY/panelX;
+  int wh=pixelX/2, y=pixelY/2, hp=pixelY/pixelX;
   for (int x=wh; x >=0; x--){ 
-    int w=panelX-(x*2);
-    int h=panelY-(y*2);
+    int w=pixelX-(x*2);
+    int h=pixelY-(y*2);
 //    drawRect(x, y, w, h,col_white); // white rect
     pageClear();drawLine(x,y,w,h,col_white);
     y-=hp; 
@@ -92,6 +76,7 @@ void pageTest() {
 
 /* show esp page */
 void pageEsp() {
+  pageRefresh=5000;
   pageClear();
 
   uint32_t chipid=espChipId(); // or use WiFi.macAddress() ?
@@ -129,9 +114,10 @@ void pageEsp() {
 }
 
 void pageTime() {
+  pageRefresh=1000;
   pageClear();
-  drawTime(10,5,col_red);
-  drawDate(2,20,col_red);
+  drawTime(10,5,fontSize,col_red);
+  drawDate(2,20,fontSize,col_red);
   drawLine(5,15,60,15,col_white);
   draw();
   delay(250);
@@ -139,6 +125,7 @@ void pageTime() {
 }  
 
 void pageGif() {
+  pageRefresh=5000;
   pageClear();
   int max=fsDirSize(".gif");
   int f=random(0,max);
@@ -158,6 +145,7 @@ void pageGif() {
 int pageCmdNr=0;
 
 void pageCmd() {
+  pageRefresh=30000;
   pageClear();  
   int max=fsDirSize(".cmd");
   pageCmdNr++; if(pageCmdNr>=max) { pageCmdNr=0; }
@@ -167,34 +155,17 @@ void pageCmd() {
 
 //-----------------------------------------------------------
 
-void pageSetup() {
-  col_red=toColor444(15,0,0);
-  col_white=toColor444(15,15,15);
-  col_black=toColor444(0,0,0);  
-  col_green=toColor444(0,15,0);  
-  col_blue=toColor444(0,0,15);  
-    
+void displayPageSetup() {
+  pages.add(new PageFunc("title",pageTitle,NULL));
+  pages.add(new PageFunc("esp",pageEsp,NULL));
+  pages.add(new PageFunc("test",pageStart,NULL));
+  pages.add(new PageFunc("time",pageTime,NULL));
+  pages.add(new PageFunc("gif",pageGif,NULL));
+  pages.add(new PageFunc("cmd",pageCmd,NULL));
+
   pageStart();  
-  pageTitle(); matrixPage=1;  
+  pageSet(1); 
 }
 
-void matrixStatus() {
-  if(eeMode<=EE_MODE_AP) { drawLine(0,panelY,panelX,panelY,col_blue);} // blue => AP Mode
-  else if(eeMode!=EE_MODE_OK) { drawLine(0,panelY,panelX,panelY,col_red);} // red => Mode wrong  
-}
+void displayPageLoop() {}
 
-void pageLoop() {
-  if(!displayEnable && !_displaySetup) { return ; }
-  if(matrixPage>0) {
-    if(isTimer(matrixPageTime, 1000)) { 
-      if(matrixPage==1) { pageTitle(); } // draw title again 
-      else if(matrixPage==2) { pageEsp(); } 
-      else if(matrixPage==3) { pageStart(); } 
-      else if(matrixPage==4) { pageTime(); } 
-      else if(matrixPage==5) { pageGif(); } 
-      else if(matrixPage==6) { pageCmd(); } 
-    }
-  }else {
-    if(isTimer(matrixPageTime, 1000)) { matrixStatus(); } // draw staus
-  }  
-}

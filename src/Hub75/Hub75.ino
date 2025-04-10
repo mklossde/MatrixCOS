@@ -6,7 +6,7 @@
 #include <AnimatedGIF.h>
  
 const char *prgTitle = "MatrixCOS";
-const char *prgVersion = "V1.2.1";
+const char *prgVersion = "V1.2.2";
 
 const char* user_admin = "admin"; // default user
 char user_pas[]="";   // default espPas
@@ -84,6 +84,7 @@ void setup() {
   if(isModeNoError()) { 
     displaySetup();
     pageSetup();
+    displayPageSetup();
     swCmd(1,"pageNext"); // nextPage on one sw click
     swCmd(2,"pageCmd"); // nextCmd on two sw click
     swCmd(10,"drawOff"); // drawOff on two sw click
@@ -95,6 +96,7 @@ void loop() {
   if(isModeNoError()) { 
     drawLoop();
     pageLoop();
+    displayPageLoop();
     effectLoop();
   }  
 }

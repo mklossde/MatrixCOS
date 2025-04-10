@@ -6,15 +6,24 @@ MatrixPanel_I2S_DMA *dma_display = nullptr;
 
 Adafruit_GFX *display=NULL;
 
+byte _effectType=0;
+byte fontSize=1;
+
 //--------------------------------------
 
-int panelX=64;
-int panelY=64;
+int pixelX=64;
+int pixelY=64;
+
+int col_red;
+int col_white;
+int col_black;
+int col_green;
+int col_blue;
 
 // Matrix store structur
 typedef struct {
-  int pX=panelX;
-  int pY=panelY;
+  int pX=pixelX;
+  int pY=pixelY;
   byte panelChain=1;
   char pins[64]="0,15,4,16,27,17,5,18,19,21,12,33,25,22";
   byte brightness=90;
@@ -34,7 +43,7 @@ boolean _displaySetup=false; // matrix setup ok
 //--------------------------------------
 
 char* displayInfo() {
-  sprintf(buffer, "Matrix enabled:%d ok:%d panelX:%d panelY:%d panelChain:%d brightness:%d rotation:%d pins:%s dmaBuffer:%d disBuffer:%d latBlanking:%d clkphase:%d",
+  sprintf(buffer, "Matrix enabled:%d ok:%d pixelX:%d pixelY:%d panelChain:%d brightness:%d rotation:%d pins:%s dmaBuffer:%d disBuffer:%d latBlanking:%d clkphase:%d",
     displayEnable,_displaySetup,eeDisplay.pX,eeDisplay.pY,eeDisplay.panelChain,eeDisplay.brightness,eeDisplay.rotation,eeDisplay.pins,
     eeDisplay.dmaBuffer,eeDisplay.displayBuffer,
     eeDisplay.latBlanking, eeDisplay.clkphase);
@@ -47,7 +56,7 @@ void displaySave() {
 
   EEPROM.put(eeAppPos, eeDisplay ); 
   EEPROM.commit();  // Only needed for ESP8266 to get data written
-  sprintf(buffer, "displaySave eeAppPos:%d panelX:%d panelY:%d panelChain:%d brightness:%d rotation:%d pins:%s",
+  sprintf(buffer, "displaySave eeAppPos:%d pixelX:%d pixelY:%d panelChain:%d brightness:%d rotation:%d pins:%s",
     eeAppPos,eeDisplay.pX,eeDisplay.pY,eeDisplay.panelChain,eeDisplay.brightness,eeDisplay.rotation,eeDisplay.pins);logPrintln(LOG_INFO,buffer);
 }
 
@@ -57,7 +66,7 @@ void displayLoad() {
   EEPROM.begin(EEBOOTSIZE);
   EEPROM.get(eeAppPos, eeDisplay); // eeBoot read
   EEPROM.end(); 
-  sprintf(buffer, "displayLoad eeAppPos:%d panelX:%d panelY:%d panelChain:%d brightness:%d rotation:%d pins:%s",
+  sprintf(buffer, "displayLoad eeAppPos:%d pixelX:%d pixelY:%d panelChain:%d brightness:%d rotation:%d pins:%s",
     eeAppPos,eeDisplay.pX,eeDisplay.pY,eeDisplay.panelChain,eeDisplay.brightness,eeDisplay.rotation,eeDisplay.pins);logPrintln(LOG_INFO,buffer);
 }
 
@@ -66,9 +75,9 @@ boolean displayInit() {
     displayLoad(); // load eeDisplay
     if(!is(eeDisplay.pins,10,64)) { logPrintln(LOG_SYSTEM,"matrix init wrong"); return false;}
 
-    panelX=eeDisplay.pX;
-    panelY=eeDisplay.pY;
-    if(panelX<=0 || panelY<=0) { sprintf(buffer,"matrix size wrong %d %d",panelX,panelY); logPrintln(LOG_ERROR,buffer); return false; }
+    pixelX=eeDisplay.pX;
+    pixelY=eeDisplay.pY;
+    if(pixelX<=0 || pixelY<=0) { sprintf(buffer,"matrix size wrong %d %d",pixelX,pixelY); logPrintln(LOG_ERROR,buffer); return false; }
 
     char* temp = strdup(eeDisplay.pins);  // Duplicate the string to avoid modifying the original
     char* token = strtok(temp, ",");
@@ -106,12 +115,17 @@ void displayDraw() {
   else if(eeDisplay.displayBuffer) {
     GFXcanvas16 *canvas=(GFXcanvas16*)display;  
     uint16_t *buffer=canvas->getBuffer();
-    dma_display->drawRGBBitmap(0,0,buffer,panelX,panelY);
+    dma_display->drawRGBBitmap(0,0,buffer,pixelX,pixelY);
   }
 }
 
 /* clear display */
 void displayClear() { if(!_displaySetup) { return ; } dma_display->clearScreen(); }
+void bufferClear() { 
+  if(_displaySetup && eeDisplay.displayBuffer && display!=NULL) { 
+    display->fillRect(0,0,pixelX,pixelY,0); 
+  } 
+}
 
 /* set Brightness 0-255 **/
 void displayBrightness(int b) {  if(!_displaySetup) { return ; } dma_display->setBrightness8(b); } 
@@ -151,6 +165,13 @@ void displaySetup() {
   dma_display->setBrightness8(eeDisplay.brightness);  //  Brightness 0-255
   dma_display->setRotation(eeDisplay.rotation);      // Rotation, 0-4
   dma_display->clearScreen();
+
+  col_red=toColor444(15,0,0);
+  col_white=toColor444(15,15,15);
+  col_black=toColor444(0,0,0);  
+  col_green=toColor444(0,15,0);  
+  col_blue=toColor444(0,0,15); 
+
 }
 
 
