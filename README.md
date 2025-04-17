@@ -1,7 +1,7 @@
 
 # MatrixCOS - Esp32 HUB75 Matrix
 
-develop by mk@almi.de
+develop by OpenOn.org
 
 ![CmdOS LOGO](images/Hub75_logo.gif)
 
@@ -96,7 +96,7 @@ Display power values of a shelly EM (via MQTT)
 <hr> :warning: Attention: The use of information and programmes can be dangerous !  This is a private hobby project and makes no claim to completeness, runnability or compliance with regulations. Any use of this or referenced content is at your own risk and excludes any liability by authors. 
 <hr>
 
-![LOGO](images/OpenOnOrg.gif) a OpenOn.org project - develop by mk@almi.de
+![LOGO](images/OpenOnOrg.gif) a OpenOn.org project - develop by michael@openon.org
 
 If you use/like this project please [https://buymeacoffee.com/openon](https://buymeacoffee.com/openon) (a good choise is 1Euro per Device ;-) 
 

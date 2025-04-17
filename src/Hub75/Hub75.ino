@@ -1,6 +1,11 @@
 
-// MatrixCOS - Esp32 HUB75 Matrix 64x64 based on CmdOS
+// MatrixCOS - Esp32 HUB75 Matrix 64x64 
+// dev by OpenOn.org source from http://github.com/mklossde/MatrixCOS
+//
+// based on CmdOS and GFXDisplayCOS
+// GFXDisplayCOS - http://github.com/mklossde/GFXDisplayCOS
 // CmdOS - http://github.com/mklossde/CmdOs
+
 
 #include <ESPAsyncWebServer.h>
 #include <AnimatedGIF.h>

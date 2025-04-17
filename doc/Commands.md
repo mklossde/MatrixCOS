@@ -70,4 +70,4 @@ See <a href='https://github.com/mklossde/CmdOs/blob/main/doc/CmdOsCmds.md'>CmdOS
  
 - effect type step speed a b - start effect type with n-steps with speed in ms between steps
  
-![LOGO](images/Hub75_logo_32x32.gif) a OpenOn.org project - develop by mk@almi.de 
+![LOGO](images/Hub75_logo_32x32.gif) a OpenOn.org project - develop by michael@openon.org

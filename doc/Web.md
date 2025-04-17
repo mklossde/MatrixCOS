@@ -27,4 +27,4 @@ The ESP will upload the content (as upload_file) and dislpay/execute it.
 Direct draw/execute ".gif" or ".bm1" or ".cmd" by enter remote url.
 The ESP will download the content (as upload_url) and dislpay/execute it. 
 
-![LOGO](../images/Hub75_logo_32x32.gif) a OpenOn.org project - develop by mk@almi.de 
+![LOGO](../images/Hub75_logo_32x32.gif) a OpenOn.org project - develop by michael@openon.org 

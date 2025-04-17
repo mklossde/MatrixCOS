@@ -30,4 +30,4 @@ e.g.
 For Basi-Auth calls use	
 	e.g. http://admin:pas@myesp.local/cmd/set
 
-![LOGO](../images/Hub75_logo_32x32.gif) a OpenOn.org project - develop by mk@almi.de 
+![LOGO](../images/Hub75_logo_32x32.gif) a OpenOn.org project - develop by michael@openon.org 

@@ -79,4 +79,4 @@ and the dmsBuffer is switched via "draw".
 the buffe is copied to dislpay with "draw"
 
  
-![LOGO](../images/Hub75_logo_32x32.gif) a OpenOn.org project - develop by mk@almi.de 
+![LOGO](../images/Hub75_logo_32x32.gif) a OpenOn.org project - develop by michael@openon.org 

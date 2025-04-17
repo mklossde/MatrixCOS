@@ -27,4 +27,4 @@ With displayBfffer enabled, here are some effects
 	e.g. effect 1 64 100 0 -5 
  
 	
-![LOGO](../images/Hub75_logo_32x32.gif) a OpenOn.org project - develop by mk@almi.de 
+![LOGO](../images/Hub75_logo_32x32.gif) a OpenOn.org project - develop by michael@openon.org 
